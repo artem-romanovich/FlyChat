@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="250sp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:textColor="@color/purple_200"
+        android:inputType="textPersonName"
+        android:layout_gravity="center"
+        android:text=""/>
+
+    <Button
+        android:id="@+id/button_changename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="SendMessage1"
+        android:text="Сменить имя устройства"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/button_podcl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="FindDeviceClick"
+        android:text="Подключиться"
+        android:layout_gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="30"
+        android:gravity="center"
+        android:padding="5sp"
+        android:background="@color/C5085A5"
+        android:orientation="vertical">
+
+        <ListView
+            android:background="@color/white"
+            android:id="@+id/available_devices1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="1.0sp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

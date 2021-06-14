@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/C112D32"
+        android:id="@+id/text_name"
+        android:layout_margin="15sp"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:text="КОНТАКТЫ"
+        android:onClick="ContactsClick"
+        android:background="@drawable/user_message_background"
+        android:layout_height="wrap_content"
+        android:layout_margin="15sp"
+        android:textSize="17.5sp"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:text="ОБЩЕНИЕ ПО ИНТЕРНЕТУ"
+        android:onClick="CommunicationInternetClick"
+        android:background="@drawable/user_message_background"
+        android:layout_height="wrap_content"
+        android:layout_margin="15sp"
+        android:textSize="17.5sp"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:text="ОБЩЕНИЕ БЕЗ ИНТЕРНЕТА"
+        android:onClick="CommunicationBluetoothClick"
+        android:background="@drawable/user_message_background"
+        android:layout_height="wrap_content"
+        android:layout_margin="15sp"
+        android:textSize="17.5sp"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:text="АККАУНТ"
+        android:onClick="AccountClick"
+        android:background="@drawable/user_message_background"
+        android:layout_height="wrap_content"
+        android:layout_margin="15sp"
+        android:textSize="17.5sp"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:text="НАСТРОЙКИ"
+        android:onClick="SettingsClick"
+        android:background="@drawable/user_message_background"
+        android:layout_height="wrap_content"
+        android:layout_margin="15sp"
+        android:textSize="17.5sp"
+        />
+
+</LinearLayout>
