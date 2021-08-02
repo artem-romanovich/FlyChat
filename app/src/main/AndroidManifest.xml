@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.fludrex">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -8,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <permission
         android:name="com.example.fludrex.permission.C2D_MESSAGE"
@@ -17,32 +18,49 @@
     <uses-permission android:name="com.example.fludrex.permission.C2D_MESSAGE" />
 
     <application
-        android:allowBackup="true"
-        android:icon="@drawable/ic_method_draw_image"
+        android:name=".App"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_method_draw_image"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FLUDREX">
-        <activity android:name=".RegistrationActivity" />
+        android:theme="@style/Theme.FLUDREX"
+        tools:ignore="LockedOrientationActivity">
+        <activity
+            android:name=".RegistrationActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".BottomNavigationActivity"
-            android:label="@string/title_activity_bottom_navigation" />
+            android:label="@string/title_activity_bottom_navigation"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SignIn"
-            android:noHistory="true" />
-        <activity android:name=".ContactsActivity" />
-        <activity android:name=".BluetoothActivity" />
-        <activity android:name=".MenuActivity" />
-        <activity android:name=".InternetActivity" />
+            android:noHistory="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".InternetActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ImageActivity"
-            android:noHistory="true">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".MessageListeningService"
+            android:enabled="true"
+            android:stopWithTask="false"/>
+        <receiver android:name=".NotificationReciever" />
+        <receiver android:name=".DirectReplyReciever" />
+        <receiver
+            android:name=".BootBroadcast">
+            <intent-filter >
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

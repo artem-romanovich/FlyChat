@@ -1,6 +1,7 @@
 package com.example.fludrex;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,14 +34,22 @@ public class NewBluetoothAdapter extends ArrayAdapter<MyBluetoothDevices>{
             viewHolder = new ViewHolder(convertView);
         }
         final MyBluetoothDevices devices = devicesList.get(position);
-        viewHolder.name_contact.setText(devices.getName());
+        viewHolder.name_device.setSelected(true);
+
+        if (devices.getName() == null) {
+            viewHolder.name_device.setText(String.format(" %s ", "Безымянное устройство"));
+            viewHolder.name_device.setTypeface(null, Typeface.ITALIC);
+        } else {
+            viewHolder.name_device.setText(String.format(" %s ", devices.getName()));
+        }
+
         return convertView;
     }
 
     private class ViewHolder {
-        final TextView name_contact;
+        final TextView name_device;
         ViewHolder(View view){
-            name_contact = view.findViewById(R.id.name_contact);
+            name_device = view.findViewById(R.id.name_device);
         }
     }
 }

@@ -1,29 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--<item
         android:id="@+id/navigation_contacts"
         android:icon="@drawable/baseline_import_contacts_black_48"
         android:title="Контакты" />-->
-
     <item
         android:id="@+id/navigation_contacts"
         android:icon="@drawable/baseline_wifi_black_48"
         android:title="Интернет" />
-
-    <!--<item
-        android:id="@+id/navigation_internet"
-        android:icon="@drawable/baseline_wifi_black_48"
-        android:title="Интернет" />-->
-
     <item
         android:id="@+id/navigation_bluetooth"
         android:icon="@drawable/baseline_bluetooth_black_48"
         android:title="Bluetooth" />
-
-    <!--<item
+    <item
         android:id="@+id/navigation_account"
         android:icon="@drawable/baseline_person_black_48"
-        android:title="Аккаунт" />-->
+        android:title="Аккаунт" />
 
 </menu>
