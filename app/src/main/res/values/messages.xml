@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="received_messages">
-        <item>hi!</item>
+        <!--<item>hi!</item>
         <item>privet!</item>
-        <item>bonjur!</item>
+        <item>bonjur!</item>-->
     </string-array>
 </resources>

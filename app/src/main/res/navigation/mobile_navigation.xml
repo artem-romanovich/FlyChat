@@ -3,13 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_contacts">
-
-    <fragment
-        android:id="@+id/navigation_internet"
-        android:name="com.example.fludrex.ui.internet.InternetFragment"
-        android:label="Интернет"
-        tools:layout="@layout/fragment_internet" />
+    app:startDestination="@+id/navigation_account">
 
     <fragment
         android:id="@+id/navigation_bluetooth"

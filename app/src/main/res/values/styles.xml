@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Font" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily" type="">@font/montserrat_bold</item>
+    </style>
+
+    <style name="FontThinner" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily" type="">@font/montserratmedium</item>
+    </style>
+
+    <style name="style_button">
+        <item name="android:background">@drawable/btn_selector</item>
+        <item name="android:fontFamily" type="">@font/montserrat_bold</item>
+    </style>
+
+</resources>
