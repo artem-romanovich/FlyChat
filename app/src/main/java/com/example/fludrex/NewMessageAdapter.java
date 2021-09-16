@@ -1,6 +1,5 @@
 package com.example.fludrex;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,9 +19,7 @@ public class NewMessageAdapter extends ArrayAdapter<MyMessage> {
         this.messageList = messages;
         this.layout = R.layout.message_item_user;
         this.inflater = LayoutInflater.from(context);
-        //if (IorU == interlocutor) this.layout = R.layout.message_item_interlocutor;
-        //if (IorU == user) this.layout = R.layout.message_item_user;
-
+        if (IorU == 1) this.layout = R.layout.message_item_user;
     }
     public View getView(int position, View convertView, ViewGroup parent) {
 

@@ -1,134 +1,148 @@
 package com.example.fludrex;
 
-import android.app.ActionBar;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.content.pm.PackageManager;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.database.snapshot.ChildKey;
+import com.google.firebase.database.ServerValue;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import java.util.ArrayList;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Objects;
 
-import static android.content.ContentValues.TAG;
+/*
+    BottomNavigationActivity. В ней происходит все основное действие.
+*/
 
 public class BottomNavigationActivity extends AppCompatActivity {
 
-    DatabaseReference INTERLOCUTOR;
-
-    ArrayList<String> MESSAGES;
-    Map<String, MyMessage> map;
-    ArrayList<MyMessage> messages = new ArrayList<>();
-
-    public String my_name; //!
-    public String interlocutor_name;
-    public String chatId;
-
-    private static final String CHANNEL_ID = "New channel";
-    private int counter = 101;
+    private static final int REQUEST_ENABLE_BT = 1;
+    DatabaseReference NOTIFICATION;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Убрать ActionBar
         Objects.requireNonNull(getSupportActionBar()).hide();
 
+        //Сборка воедино всех фрагментов, выбор начального
         setContentView(R.layout.activity_bottom_navigation);
         BottomNavigationView navView = findViewById(R.id.nav_view);
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_bluetooth,
                 R.id.navigation_contacts,
-                R.id.navigation_internet,
                 R.id.navigation_account).build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
-        /*final ChildEventListener childEventListener1 = INTERLOCUTOR.addChildEventListener(new ChildEventListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
-                String data_snapshotValue = datasnapshot.getValue(String.class);
+        String t = getIntent().getStringExtra("toast");
+        if (t != null) {
+            if (t.equals("1")) {
 
-                Intent intent = new Intent(BottomNavigationActivity.this, BottomNavigationActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                PendingIntent pendingIntent = PendingIntent.getActivity(BottomNavigationActivity.this, 0, intent, 0);
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(BottomNavigationActivity.this, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_method_draw_image)
-                        .setContentTitle(interlocutor_name)
-                        .setContentText(data_snapshotValue)
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                        .setContentIntent(pendingIntent)
-                        .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
-                        .setAutoCancel(true);
-                Notification notification = builder.build();
+                Toast.makeText(getApplicationContext(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
 
-                createNotificationChannel(interlocutor_name, data_snapshotValue);
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(BottomNavigationActivity.this);
-                notificationManager.notify(counter, notification);
+                WifiManager wifi = (WifiManager)
+                        this.getSystemService(Context.WIFI_SERVICE);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    Intent panelIntent = new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
+                    startActivityForResult(panelIntent, 0);
+                } else {
+                    wifi.setWifiEnabled(true);
+                }
+                //Toast.makeText(getApplicationContext(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
             }
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                Log.wtf("onChildChanged", "happen");
+            if (t.equals("2")) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
-            @Override
-            public void onChildRemoved(DataSnapshot snapshot) {
+        }
+
+        //Запись в файл поля, под которым хранится вся информация БД.
+        try {
+            BufferedWriter bs = new BufferedWriter(new OutputStreamWriter(
+                    openFileOutput("file_secret_field", MODE_PRIVATE)));
+            String secret_field = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOc9PSHdGyL+SwYokr1xBo48GuBjaKLHQlvCA7PTY6WMllh9IJ31DbtJ08ATDwW+q0Pk7wM80d5kF1lUMXsUNkCAwEAAQ";
+            bs.write(secret_field);
+            bs.close();
+            BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("file_nic")));
+            String my_nic = br_nn.readLine();
+
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            NOTIFICATION = database.getReference(secret_field + "/Notifications/" + my_nic);
+            //NOTIFICATION.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
+
+            startService(secret_field);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        int MY_PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_BACKGROUND_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION);
+            switch (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                case PackageManager.PERMISSION_DENIED:
+
+                    //Если доступ запрещен к background-у запрещен, приложение проверяет, открыт ли доступ к местоположению
+                    //в формате "только во время использования". Если да, уведомляет об этом пользователя и просит изменить
+                    //формат разрешения
+                    if (ContextCompat.checkSelfPermission(this.getBaseContext(),
+                            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                                MY_PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION);
+                    }
+                case PackageManager.PERMISSION_GRANTED:
+                    break;
             }
-            @Override
-            public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+
+            //Если доступ запрещен, приложение для дальнейшей работы требует вручную перевести разрешение
+            //в формат "в любом режиме" в настройках
+            boolean hasBackgroundLocationPermission = ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            if (!hasBackgroundLocationPermission) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_BACKGROUND_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION);
+                //Toast.makeText(getApplicationContext(), "Необходим доступ к местоположению в любом режиме. Разрешите доступ вручную в настройках", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(BottomNavigationActivity.this, ImageActivity.class);
+                intent.putExtra("BACKGROUND_LOCATION", "show");
+                startActivity(intent);
+                finish();
             }
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });*/
+        }
     }
 
-    private void createNotificationChannel(String interlocutor_name, String data_snapshotValue) {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, interlocutor_name, importance);
-            channel.setDescription(data_snapshotValue);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
+    public void startService(String secret_field) {
+        Intent serviceIntent = new Intent(this, MessageListeningService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+    }
+
+    public void stopService() {
+        Intent serviceIntent = new Intent(this, MessageListeningService.class);
+        startService(serviceIntent);
     }
 }

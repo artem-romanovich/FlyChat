@@ -14,11 +14,9 @@ public class MyMessage {
     public String getName() {
         return name;
     }
-
     public String getText() {
         return text;
     }
-
     public String getTime() {
         return time;
     }

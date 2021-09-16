@@ -1,0 +1,99 @@
+package com.example.fludrex;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+
+public class NewMessageAdapterMoreLays extends ArrayAdapter<MyMessage> {
+    private LayoutInflater inflater;
+    private ArrayList<MyMessage> messageList;
+    private ArrayList<String> MESSAGES;
+    private String my_nic;
+
+    int USER_VARIANT = 0;
+    int INTERLOCUTOR_VARIANT = 1;
+    int MULTI_VARIANT = 2;
+
+    public NewMessageAdapterMoreLays(Context context, ArrayList<String> MESSAGES, ArrayList<MyMessage> messages, String my_nic) {
+        super(context, R.layout.message_item_user, messages);
+        this.messageList = messages;
+        this.inflater = LayoutInflater.from(context);
+        this.MESSAGES = MESSAGES;
+        this.my_nic = my_nic;
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return 3;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        int t;
+        try {
+            if (MESSAGES.get(position).contains("_(" + my_nic + ")_" + my_nic + "_" + my_nic)) {
+                t = MULTI_VARIANT;
+            } else {
+
+                if (MESSAGES.get(position).contains("_(" + my_nic + ")_" + my_nic)) {
+                    t = USER_VARIANT;
+                } else {
+                    t = INTERLOCUTOR_VARIANT;
+                }
+
+            }
+        } catch (Exception e) {
+            t = MULTI_VARIANT;
+            e.printStackTrace();
+        }
+        return t;
+    }
+
+    public View getView(int position, View convertView, ViewGroup parent) {
+
+        final ViewHolder viewHolder;
+        int type = getItemViewType(position);
+        if (convertView == null) {
+
+            if (type == USER_VARIANT) {
+                convertView = inflater.inflate(R.layout.message_item_user, parent, false);
+            }
+            if (type == INTERLOCUTOR_VARIANT) {
+                convertView = inflater.inflate(R.layout.message_item_interlocutor, parent, false);
+            }
+            if (type == MULTI_VARIANT) {
+                convertView = inflater.inflate(R.layout.message_item_universal, parent, false);
+            }
+            //
+            //convertView = inflater.inflate(R.layout.message_item_universal, parent, false);
+            //
+            viewHolder = new ViewHolder(convertView);
+            convertView.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) convertView.getTag();
+        }
+
+        final MyMessage message = messageList.get(position);
+
+        viewHolder.name_message.setText(message.getName());
+        viewHolder.text_message.setText(message.getText());
+        viewHolder.time_message.setText(message.getTime());
+
+        return convertView;
+    }
+
+    private class ViewHolder {
+        final TextView name_message, time_message, text_message;
+
+        ViewHolder(View view) {
+            name_message = view.findViewById(R.id.user_message);
+            time_message = view.findViewById(R.id.time_message);
+            text_message = view.findViewById(R.id.text_message);
+        }
+    }
+}

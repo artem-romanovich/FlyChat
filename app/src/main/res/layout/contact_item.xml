@@ -5,23 +5,38 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="5sp"
-        android:padding="5sp"
-        android:textColor="@color/white"
-        android:background="@drawable/user_message_background">
+        android:textColor="?attr/colorOnPrimary">
 
         <TextView
-            android:layout_width="match_parent"
             android:id="@+id/name_contact"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:layout_marginLeft="5sp"
+            android:layout_marginStart="10sp"
+            android:layout_marginLeft="10sp"
             android:background="@drawable/user_message_background"
-            android:textSize="15sp"
-            android:layout_marginStart="10sp" />
+            android:textColor="@color/white"
+            android:textSize="20sp" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="15sp"
+        android:layout_marginRight="15sp"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/status_contact"
+            style="@style/Font"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="17sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

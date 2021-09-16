@@ -2,31 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorPrimaryVariant"
     android:gravity="center"
-    android:padding="5sp"
-    android:background="@color/C5085A5"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="5sp">
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?attr/colorOnPrimary"
         android:gravity="center"
-        android:background="@color/white"
         android:orientation="vertical">
 
         <TextView
+            style="@style/Font"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="60sp"
             android:layout_marginRight="60sp"
             android:layout_marginBottom="20sp"
-            android:text="С возвращением! \nМы скучали! ☺"
-            android:textColor="@color/C31708E"
+            android:text="Ого, вы успели завести несколько аккаунтов..."
+            android:textColor="?attr/colorPrimary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <TextView
+        <!--<TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="60sp"
@@ -34,20 +34,20 @@
             android:gravity="left"
             android:text="Введите адрес почты:"
             android:textColor="@color/black"
-            android:textSize="17sp" />
+            android:textSize="17.5sp" />
 
         <EditText
             android:id="@+id/sign_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="60sp"
+            style="@style/Font"
             android:layout_marginRight="60sp"
             android:layout_marginBottom="20sp"
             android:gravity="center"
             android:hint="Адрес вашей почты"
             android:inputType="textEmailAddress"
-            android:textColor="@color/purple_200"
-            android:textSize="20sp" />
+            android:textSize="17.5sp" />-->
 
         <TextView
             android:layout_width="match_parent"
@@ -55,9 +55,33 @@
             android:layout_marginLeft="60sp"
             android:layout_marginRight="60sp"
             android:gravity="left"
+            android:text="Введите никнейм:"
+            android:textColor="?attr/colorOnSecondary"
+            android:textSize="17.5sp" />
+
+        <EditText
+            android:id="@+id/sign_nic"
+            style="@style/Font"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="60sp"
+            android:layout_marginRight="60sp"
+            android:layout_marginBottom="20sp"
+            android:digits="0123456789.abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            android:gravity="center"
+            android:hint="Ваш никнейм"
+            android:inputType="text"
+            android:textSize="17.5sp" />
+
+        <!--<TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="60sp"
+            android:layout_marginRight="60sp"
+            android:gravity="left"
             android:text="Введите имя:"
             android:textColor="@color/black"
-            android:textSize="17sp" />
+            android:textSize="17.5sp" />
 
         <EditText
             android:id="@+id/sign_name"
@@ -69,8 +93,8 @@
             android:gravity="center"
             android:hint="Ваше имя"
             android:inputType="text"
-            android:textColor="@color/purple_200"
-            android:textSize="20sp" />
+            style="@style/Font"
+            android:textSize="17.5sp" />-->
 
         <TextView
             android:layout_width="match_parent"
@@ -79,31 +103,32 @@
             android:layout_marginRight="60sp"
             android:gravity="left"
             android:text="Введите пароль:"
-            android:textColor="@color/black"
-            android:textSize="17sp" />
+            android:textColor="?attr/colorOnSecondary"
+            android:textSize="17.5sp" />
 
         <EditText
             android:id="@+id/sign_password"
+            style="@style/Font"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="60sp"
             android:layout_marginRight="60sp"
             android:layout_marginBottom="15sp"
+            android:digits="0123456789.abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             android:gravity="center"
             android:hint="Ваш пароль"
             android:inputType="textPassword"
-            android:textColor="@color/purple_200"
-            android:textSize="20sp" />
+            android:textSize="17.5sp" />
 
-        <Button
-            android:id="@+id/sign_btn_set_name"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/sign_btn"
+            style="@style/style_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/user_message_background"
             android:onClick="signClick"
             android:text="Войти"
-            android:textColor="@color/CF7F9FB"
-            android:textSize="15sp" />
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
 
     </LinearLayout>
 

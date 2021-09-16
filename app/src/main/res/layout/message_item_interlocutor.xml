@@ -5,22 +5,22 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="0sp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="horizontal">
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="0sp"
         android:layout_height="wrap_content"
         android:layout_weight="30"
-        android:background="@drawable/interlocutor_message_background"
+        android:background="@drawable/user_message_background"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="0sp"
             android:layout_weight="30"
             android:orientation="horizontal">
 
@@ -28,11 +28,11 @@
                 android:id="@+id/user_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="user"
-                android:layout_marginLeft="5dp"
-                android:textColor="@color/C31708E"
-                android:textSize="20dp"
+                style="@style/FontThinner"
+                android:text="interlocutor"
+                android:layout_marginLeft="5sp"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="17.5sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -41,12 +41,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                style="@style/FontThinner"
                 android:gravity="end"
                 android:text="time"
-                android:layout_marginRight="5dp"
-                android:textColor="@color/C31708E"
-                android:textSize="12.5dp"
-                android:textStyle="italic" />
+                android:layout_marginRight="5sp"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="12.5sp"/>
 
         </LinearLayout>
 
@@ -54,20 +54,20 @@
             android:id="@+id/text_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:paddingTop="5dp"
-            android:paddingRight="10dp"
-            android:paddingBottom="10dp"
+            android:paddingLeft="10sp"
+            android:paddingTop="5sp"
+            android:paddingRight="10sp"
+            android:paddingBottom="10sp"
             android:text="text"
-            android:textColor="@color/C31708E"
-            android:textSize="15dp" />
+            android:linksClickable="true"
+            android:autoLink="web"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="15sp" />
 
     </LinearLayout>
 
-
-
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="0sp"
         android:layout_height="match_parent"
         android:layout_weight="5"
         android:orientation="horizontal">

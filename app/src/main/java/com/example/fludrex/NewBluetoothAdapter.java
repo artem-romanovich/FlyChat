@@ -1,15 +1,16 @@
 package com.example.fludrex;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
 import java.util.ArrayList;
 
-public class NewBluetoothAdapter extends ArrayAdapter<MyBluetoothDevices>{
+public class NewBluetoothAdapter extends ArrayAdapter<MyBluetoothDevices> {
     private LayoutInflater inflater;
     private int layout;
     private ArrayList<MyBluetoothDevices> devicesList;
@@ -24,23 +25,37 @@ public class NewBluetoothAdapter extends ArrayAdapter<MyBluetoothDevices>{
     public View getView(int position, View convertView, ViewGroup parent) {
 
         final ViewHolder viewHolder;
-        if(convertView==null){
+        if (convertView == null) {
             convertView = inflater.inflate(this.layout, parent, false);
             viewHolder = new ViewHolder(convertView);
             convertView.setTag(viewHolder);
-        }
-        else{
+        } else {
             viewHolder = new ViewHolder(convertView);
         }
         final MyBluetoothDevices devices = devicesList.get(position);
-        viewHolder.name_contact.setText(devices.getName());
+        viewHolder.name_device.setSelected(true);
+
+        if (devices.getName() == null) {
+            viewHolder.name_device.setText(String.format(" %s ", "Безымянное устройство"));
+            viewHolder.name_device.setTypeface(null, Typeface.ITALIC);
+        } else {
+
+            if (devices.getName().contains("нет аккаунта!")) {
+                viewHolder.name_device.setText(String.format(" %s ", devices.getName()));
+                viewHolder.name_device.setTypeface(null, Typeface.ITALIC);
+            } else {
+                viewHolder.name_device.setText(String.format(" %s ", devices.getName()));
+            }
+        }
+
         return convertView;
     }
 
     private class ViewHolder {
-        final TextView name_contact;
-        ViewHolder(View view){
-            name_contact = view.findViewById(R.id.name_contact);
+        final TextView name_device;
+
+        ViewHolder(View view) {
+            name_device = view.findViewById(R.id.name_device);
         }
     }
 }
