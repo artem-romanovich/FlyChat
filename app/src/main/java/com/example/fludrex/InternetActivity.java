@@ -340,49 +340,6 @@ public class InternetActivity extends AppCompatActivity {
             adapterMoreLays.notifyDataSetChanged();
             messagesList.setSelection(keys_after.size());
 
-            //Получение доступа к БД Firebase. Считываем публичный ключ собеседника, чтобы кодировать ему сообщение.
-            final DatabaseReference key_public_Ref = database.getReference(secret_field + "/Internet_Messages/" + chatId + "/" + interlocutor_nic + "_key_public");
-            key_public_Ref.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NotNull DataSnapshot dataSnapshot11) {
-                    if (!chatId.equals("Chat_" + my_nic + "_" + my_nic)) {
-
-                            //При попытке отправки текста появляется кнопка "Начать общение" (Точнее говоря, на все той же кнопке меняется текст).
-                            get_message.setVisibility(View.GONE);
-
-                            //Отключение клавиатуры
-                            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                            imm.hideSoftInputFromWindow(btn_edit_message.getWindowToken(), 0);
-
-                            //Появление Snackbar, предложение запроса.
-                            Snackbar snackbar = Snackbar.make(btn_edit_message, "Пользователь еще не добавил вас в список контактов", Snackbar.LENGTH_INDEFINITE);
-                            snackbar.setAction("Запрос", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
-                                @Override
-                                public void onClick(View v) {
-
-                                    //Получение доступа к БД Firebase. Отправка запроса пользователю на добавление в список контактов.
-                                    REQUEST = database.getReference(secret_field + "/Request/" + interlocutor_nic);
-                                    InternetActivity.this.REQUEST.push().setValue(my_nic);
-
-                                    //Toast.makeText(getApplicationContext(), interlocutor_name + " получит ваше приглашение", Toast.LENGTH_SHORT).show();
-                                    btn_edit_message.setVisibility(View.GONE);
-                                    get_message.setFocusable(false);
-
-                                    Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
-                                    startActivity(intent);
-                                }
-                            });
-                            snackbar.setTextColor(0XFFFFFFFF);
-                            snackbar.setBackgroundTint(0XFF31708E);
-                            snackbar.setActionTextColor(0XFFFFFFFF);
-                            snackbar.show();
-                        }
-                    }
-
-                @Override
-                public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                }
-            });
             //Обнуляем EditText
             get_message.setText("");
 
@@ -493,6 +450,49 @@ public class InternetActivity extends AppCompatActivity {
                                                     saveDataMessages(my_nic, InternetActivity.this);
                                                     adapterMoreLays.notifyDataSetChanged();
                                                     messagesList.smoothScrollToPosition(MESSAGES.size());
+                                                }
+                                            } else {
+                                                try {
+                                                    //Получение публичного ключа
+                                                    String key_public = dataSnapshot11.getValue(String.class);
+                                                    //Log.wtf("key_public_Base64 (string)", key_public);
+
+                                                    //Преобразование публичного ключа в массив байт, последующая расшифровка до состояния "PublicKey"
+                                                    byte[] publicKeyBytes = Base64.getDecoder().decode(key_public);
+                                                    //byte[] publicKeyBytes = Base64.decode(key_public, Base64.NO_PADDING | Base64.NO_WRAP);
+                                                    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                                                    X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+                                                    PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+
+                                                    //Определяем, что мы с помощью данного ключа будем шифровать сообщение
+                                                    Cipher rsa = Cipher.getInstance("RSA");
+                                                    rsa.init(Cipher.ENCRYPT_MODE, publicKey);
+
+                                                    //И непосредственно это и делаем - шифруем сообщение, переводим в строку
+                                                    String encrypt_sent_message = Base64.getEncoder().encodeToString(rsa.doFinal(sent_message.getBytes()));
+                                                    //Log.wtf("encrypt_sent_message", encrypt_sent_message);
+
+                                                    //Отправляем данную строку, приписав к ней время отправки. Затем собеседник получит ее и разберет.
+                                                    //InternetActivity.this.USER.push().setValue(currentTime.currenttime + encrypt_sent_message);
+                                                    USER = database.getReference(secret_field + "/Internet_Messages/" + "/" + chatId + "/" + my_nic);
+                                                    mkey = InternetActivity.this.USER.push().getKey();
+                                                    //Log.wtf("mkey", mkey);
+                                                    assert mkey != null;
+                                                    InternetActivity.this.USER.child(mkey).setValue(mkey + "<" + currentTime.currenttime + encrypt_sent_message);
+                                                    InternetActivity.this.NOTIFICATION.child(mkey).setValue(
+                                                            mkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
+                                                    //NOTIFICATION.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
+
+                                                    //Добавление сообщения и обновление адаптера. Разумеется, в чистом, некодированном, виде.
+                                                    messages.add(new MyMessage(my_name, sent_message, get_time_To_look));
+                                                    MESSAGES.add(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic);
+                                                    map.put(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic, new MyMessage(my_name, sent_message, get_time_To_look));
+                                                    saveDataMessages(my_nic, InternetActivity.this);
+                                                    adapterMoreLays.notifyDataSetChanged();
+                                                    messagesList.smoothScrollToPosition(MESSAGES.size());
+
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
                                                 }
                                             }
                                         }

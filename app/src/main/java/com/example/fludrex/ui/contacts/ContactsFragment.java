@@ -6,6 +6,7 @@ package com.example.fludrex.ui.contacts;
 //В коде можно посмотреть разницу между реализациями каждого варианта.
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -79,9 +80,11 @@ import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static android.content.ContentValues.TAG;
@@ -136,6 +139,7 @@ public class ContactsFragment extends Fragment {
     public FirebaseUser currentUser;
     DatabaseReference CAPABLE;
     DatabaseReference VERSION;
+    DatabaseReference ACC;
     DatabaseReference CHAT_users;
     DatabaseReference LISTEN_REQUEST;
 
@@ -216,426 +220,497 @@ public class ContactsFragment extends Fragment {
                     @Override
                     public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
                         if (datasnapshot.exists()) {
+                            try {
 
-                            //Получаем статус
-                            status = datasnapshot.getValue(String.class);
-                            Log.wtf("Capable", status);
+                                //Получаем статус
+                                status = datasnapshot.getValue(String.class);
+                                Log.wtf("Capable", status);
 
-                            //Если на сервере техн. режим, пользователю запрещается доступ к приложению
-                            if (status.equals("NO")) {
-                                Toast.makeText(requireActivity(),
-                                        "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
-                                startActivity(intent);
-                                requireActivity().finish();
+                                //Если на сервере техн. режим, пользователю запрещается доступ к приложению
+                                if (status.equals("NO")) {
+                                    Toast.makeText(requireActivity(),
+                                            "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
+                                    Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
+                                    startActivity(intent);
+                                    requireActivity().finish();
+                                } else {
+                                    DatabaseReference CheckAcc = FirebaseDatabase.getInstance().getReference(secret_field + "/Status/Capable/Acc/");
+                                    ValueEventListener acc_listener = new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshotacc) {
+                                            Log.wtf("e", dataSnapshotacc.getValue(String.class));
+                                            Log.wtf("e", my_nic);
+                                            if (dataSnapshotacc.getValue(String.class).equals(my_nic)) {
+                                                start(my_nic, map, rootView);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                        }
+                                    };
+                                    CheckAcc.child("acc1").addListenerForSingleValueEvent(acc_listener);
+                                    CheckAcc.child("acc2").addListenerForSingleValueEvent(acc_listener);
+                                    CheckAcc.child("acc3").addListenerForSingleValueEvent(acc_listener);
+                                }
+                                if (status.equals("YES")) {
+
+                                    //Если работы на сервере не ведутся
+
+                                    //Получение доступа к БД Firebase. Определяем последнюю версию приложения.
+                                    VERSION = database.getReference(secret_field + "/Status/Version");
+                                    final ChildEventListener childEventListener2 = VERSION.addChildEventListener(new ChildEventListener() {
+                                        @SuppressLint("ResourceType")
+                                        @Override
+                                        public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
+
+                                            //Получаем последнюю версию
+                                            last_version = datasnapshot.getValue(Integer.class);
+                                            Log.wtf("Version", String.valueOf(last_version));
+
+                                            if (last_version == my_version) {
+                                                start(my_nic, map, rootView);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                                        }
+
+                                        @Override
+                                        public void onChildRemoved(DataSnapshot snapshot) {
+                                        }
+
+                                        @Override
+                                        public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError error) {
+                                        }
+                                    });
+                                } else {
+                                    if (!status.equals("NO")) {
+                                        Toast.makeText(requireActivity(), status, Toast.LENGTH_LONG).show();
+                                        Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
+                                        startActivity(intent);
+                                        requireActivity().finish();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                            if (status.equals("YES")) {
+                        } else {
+                            Log.wtf("Capable", "!incapable!");
+                        }
+                    }
 
-                                //Если работы на сервере не ведутся
+                    @Override
+                    public void onChildChanged(DataSnapshot snapshot, String
+                            previousChildName) {
+                    }
 
-                                //Получение доступа к БД Firebase. Определяем последнюю версию приложения.
-                                VERSION = database.getReference(secret_field + "/Status/Version");
-                                final ChildEventListener childEventListener2 = VERSION.addChildEventListener(new ChildEventListener() {
-                                    @SuppressLint("ResourceType")
+                    @Override
+                    public void onChildRemoved(DataSnapshot snapshot) {
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot snapshot, String
+                            previousChildName) {
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                    }
+                });
+            }
+        }
+
+        //Отрисовка пользовательского интерфейса для фрагмента
+        return rootView;
+    }
+
+    public void start(String my_nic, Map<String, MyMessage> map, View rootView) {
+
+        //загружаем сохраненные данные о контактах
+        loadDataContacts(my_nic);
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //contacts = new ArrayList<>();
+        //CONTACTS = new ArrayList<>();
+
+        ArrayList<MyMessage> messages = new ArrayList<MyMessage>();
+        //MESSAGES = new ArrayList<>();
+        SharedPreferences sharedPreferencesarrayall = requireActivity().getSharedPreferences("sharedPreferencesarrayall" + my_nic, Context.MODE_PRIVATE);
+        //this.requireActivity().getSharedPreferences("sharedPreferencesarrayall", 0).edit().clear().apply();
+        Gson gsonarrayall = new Gson();
+        String jsonarrayall = sharedPreferencesarrayall.getString("taskarrayall" + my_nic, null);
+        if (jsonarrayall != null) {
+            jsonarrayall = "{" + jsonarrayall + "}";
+        }
+        Type typearrayall = new TypeToken<TreeMap<String, MyMessage>>() {
+        }.getType();
+        map = gsonarrayall.fromJson(jsonarrayall, typearrayall);
+        if (map == null) {
+            map = (Map<String, MyMessage>) new TreeMap<String, MyMessage>();
+        }
+
+        String interlocutor_nic = "67889";
+
+        //В памяти хранится все сообщения. Нас же интересуют только те, что относятся к данному чату.
+        //Блок кода подгружает только те сообщения, которые нужны.
+        List<MyMessage> help_array_messages = new ArrayList<MyMessage>(map.values());
+        ArrayList<String> keys = new ArrayList<String>(map.keySet());
+        Collections.sort(keys);
+        for (int i = 0; i < keys.size(); i++) {
+            help_array_messages.add(map.get(keys.get(i)));
+        }
+        ArrayList<String> keys_after = new ArrayList<String>();
+        for (int i = 0; i < keys.size(); i++) {
+            if (keys.get(i).contains(("_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic))) {
+                keys_after.add(keys.get(i));
+                messages.add(help_array_messages.get(i));
+            } else if (keys.get(i).contains(("_(" + my_nic + ")_" + interlocutor_nic + "_" + my_nic))) {
+                keys_after.add(keys.get(i));
+                messages.add(help_array_messages.get(i));
+            }
+        }
+
+        if (keys_after.size() != 0) {
+            MyMessage a = map.get(keys_after.get(keys_after.size() - 1));
+            if (a != null) {
+                String b = a.getText();
+            }
+        }
+
+        //Установление адаптера для вывода информации о контактах
+        NewContactsAdapter adapter = null;
+        try {
+            //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
+            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        listView.setAdapter(adapter);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        //А вот теперь убираем разметку загрузки, отображавщуюся все это время, и начинаем демонстрировать главный экран
+        linlay_bar.setVisibility(View.GONE);
+        linlay_list.setVisibility(View.VISIBLE);
+        linlay_btn.setVisibility(View.VISIBLE);
+
+        LISTEN_REQUEST = database.getReference(secret_field + "/Request/" + my_nic);
+        NewContactsAdapter finalAdapter2 = adapter;
+        final ChildEventListener childEventListener = LISTEN_REQUEST.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NotNull DataSnapshot datasnapshotLR, String previousChildName) {
+
+                String new_user_nic = datasnapshotLR.getValue(String.class);
+                Log.wtf("заявки", "новая заявка - " + new_user_nic);
+
+                try {
+                    DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + new_user_nic);
+                    IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                String new_user_name = snapshot.getValue(String.class);
+                                Log.wtf("заявки", "новая заявка - " + new_user_name);
+
+                                //Получаем почту
+                                //Создание предупреждения, уточняем намерения пользователя
+                                AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+                                alert.setTitle("Новый запрос");
+                                alert.setMessage("Пользователь " + new_user_name + " (под ником " + new_user_nic + ") " +
+                                        "желает добавить вас в свой список контактов. Принять запрос?");
+                                alert.setPositiveButton("Принять", new DialogInterface.OnClickListener() { //Принятие приглашения
+                                    @RequiresApi(api = Build.VERSION_CODES.O)
                                     @Override
-                                    public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
+                                    public void onClick(DialogInterface dialog, int which) {
 
-                                        //Получаем последнюю версию
-                                        last_version = datasnapshot.getValue(Integer.class);
-                                        Log.wtf("Version", String.valueOf(last_version));
+                                        if (!CONTACTS.contains(new_user_nic)) { //Если в списке контактов такого пользователя нет
 
-                                        //Данные массивы нужны просто для корретного отображения информация через Toast.
-                                        String[] versionnumber = {" ", "(первая) ", "(вторая) ", "(третья) ", "(четвертая) ", "(пятая) "};
-                                        String[] versionnumber2 = {"", "первой", "второй", "третьей", "четвертой", "пятой"};
+                                            //Добавление в список контактов, обновление адаптера
+                                            contacts.add(new MyContacts(new_user_name, "offline"));
+                                            CONTACTS.add(new_user_nic);
+                                            finalAdapter2.notifyDataSetChanged();
 
-                                        if (last_version != my_version) {
+                                            //Составление id чата (подробнее - ниже при самосотоятельном добавлении), создание публичного ключа, отправление его в БД, сохранение
+                                            chatId = "Chat_" + new_user_nic + "_" + my_nic;
+                                            //chatId = "Chat_" + new_user_nic + "_" + my_name;
+                                            CHAT_NUMBER.add(chatId);
+                                            CHAT_users = database.getReference(secret_field + "/Internet_Messages/" + chatId);
+                                            generateKeys("RSA", 2048, CHAT_users, chatId, my_name, my_nic);
+                                            saveDataContacts(my_nic);
+                                            Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
 
-                                            //Если версия не последняя, пользователь об этом уведомляется. Доступ запрещается
-                                            //в связи с возможными проблемами при несовместимости версий
-                                            if (last_version < versionnumber2.length) {
-                                                Toast.makeText(requireActivity(),
-                                                        "Неактуальная " + versionnumber[my_version] + "версия приложения. " +
-                                                                "Требуется обновление до " + versionnumber2[last_version], Toast.LENGTH_LONG).show();
-                                                Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
-                                                startActivity(intent);
-                                                requireActivity().finish();
+                                            //Обновление адаптера
+                                            ListView listView = rootView.findViewById(R.id.contacts_listview1);
+                                            listView.setAdapter(finalAdapter2);
+                                            finalAdapter2.notifyDataSetChanged();
+
+                                        } else { //Если данный пользователь уже есть в списке контактов
+                                            Toast.makeText(getActivity(), "Пользователь уже есть в вашем списке", Toast.LENGTH_SHORT).show();
+                                        }
+
+                                        removerequest(secret_field, my_nic);
+                                    }
+                                });
+                                alert.setNegativeButton("Отклонить", new DialogInterface.OnClickListener() { //Отказ
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                        removerequest(secret_field, my_nic);
+                                        dialog.dismiss();
+                                    }
+                                });
+                                alert.show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
+            }
+
+            @Override
+            public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+            }
+
+            @Override
+            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+            }
+        });
+
+        //Установление слушателя событий нажатия кнопки "Искать"
+        NewContactsAdapter finalAdapter = adapter;
+        btn_find_user1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if (hasConnection(requireActivity())) { //Если интернета нет, найти через него пользователя не получится
+                        Toast.makeText(requireActivity(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
+                    } else {
+
+                        //Временно отключаем кнопку, чтобы при множественном нажатии не добавлялись тысячи одинаковых контактов,
+                        //ссылающихся на один и тот же чат. Спасибо Никите Козорезу за нахождение сей ошибки.
+                        btn_find_user1.setClickable(false);
+
+                        //Получаем имя, фамилию от Edittext
+                        user_nic = find_username1.getText().toString();
+                        //user_email = find_useremail1.getText().toString();
+
+                        //Очищаем переменные от лишнего мусора - пробелов в начале и конце
+                        ReplaceRepeat replaceRepeat = new ReplaceRepeat();
+                        //user_email = replaceRepeat.ReplaceRepeatStr(user_email);
+                        user_nic = replaceRepeat.ReplaceRepeatStr(user_nic);
+
+                        Log.wtf("usernic", user_nic);
+                        Log.wtf("mynic", my_nic);
+
+                        if (//!user_email.equals("") &&
+                            //!user_email.equals(" ") &&
+                            //!user_email.equals("/n") &&
+                                !user_nic.equals("") &&
+                                        !user_nic.equals(" ") &&
+                                        !user_nic.equals("/n")) { //Если поле не пустое (в различных конфигарациях)
+
+                            if (user_nic.equals(my_nic)) { //Себя добавить в список контактов нельзя
+                                if (!CONTACTS.contains(user_nic)) {
+
+                                    //Появление Snackbar
+                                    Snackbar snackbar = Snackbar.make(v, "Здесь можно хранить приватную информацию", Snackbar.LENGTH_INDEFINITE);
+                                    snackbar.setAction("Понятно", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                        @Override
+                                        public void onClick(View v) {
+
+                                            //Добавление в спиок контактов, поднятие флажка
+                                            contacts.add(new MyContacts(my_name, "itsme"));
+                                            CONTACTS.add(user_nic);
+                                            finalAdapter.notifyDataSetChanged();
+                                            flag = 1;
+                                            find_username1.setText("");
+                                            //Добавляем в массив, создаем key pair, сохраняем.
+                                            CHAT_NUMBER.add("Chat_" + my_nic + "_" + my_nic);
+                                            saveDataContacts(my_nic);
+                                            Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
+                                        }
+                                    });
+                                    snackbar.setTextColor(0XFFFFFFFF);
+                                    snackbar.setBackgroundTint(0XFF31708E);
+                                    snackbar.setActionTextColor(0XFFFFFFFF);
+                                    snackbar.show();
+
+                                } else {
+                                    Toast.makeText(getActivity(), "Вами уже была создана переписка с самим собой", Toast.LENGTH_SHORT).show();
+                                }
+                                btn_find_user1.setClickable(true);
+                                //Toast.makeText(getActivity(), "Невозможно добавить себя в список контактов", Toast.LENGTH_SHORT).show();
+
+                            } else {
+
+                                //Если такого контакто еще нет
+                                if (!CONTACTS.contains(user_nic)) {
+                                    flag = 0;
+                                    FLAG = 0;
+
+                                    //Получение доступа к БД Firebase. Проверяем, есть ли такой зарегестрированный пользователь в БД.
+                                    DatabaseReference UserSearch = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + user_nic);
+                                    UserSearch.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot data_Snapshot) {
+
+                                            //Получение его email-адреса. Данные хранятся в таком формате: Артем Романович: "artrom170@gmail.com".
+                                            //Поэтому находим по имени и смотрим, как соотносятся почта БД с Edittext-ом.
+                                            String get_name_from_base = data_Snapshot.getValue(String.class);
+
+                                            if (data_Snapshot.exists()) {
+
+                                                //Если адреса совпадают
+                                                //if (user_email.equals(get_email_from_base)) {
+                                                String status = "offline";
+
+                                                //Добавление в спиок контактов, поднятие флажка
+                                                contacts.add(new MyContacts(get_name_from_base, status));
+                                                CONTACTS.add(user_nic);
+                                                finalAdapter.notifyDataSetChanged();
+                                                flag = 1;
+                                                find_username1.setText("");
+
+                                                //Получение доступа к БД Firebase. Ищем чат.
+                                                chatId = "Chat_" + my_nic + "_" + user_nic;
+                                                DatabaseReference ChatSearch1 = FirebaseDatabase.getInstance().getReference(secret_field + "/Internet_Messages");
+                                                DatabaseReference ChatSearchRef = ChatSearch1.child("Chat_" + user_nic + "_" + my_nic);
+                                                ValueEventListener eventListener = new ValueEventListener() {
+                                                    @RequiresApi(api = Build.VERSION_CODES.O)
+                                                    @Override
+                                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                                        if (!dataSnapshot.exists()) { //Если чата нет (мы первые нашли пользователя) - создаем
+                                                            CHAT_users = database.getReference(secret_field + "/Internet_Messages/" + chatId);
+                                                            //ContactsFragment.this.CHAT_users.push().setValue(user_nic);
+                                                            //ContactsFragment.this.CHAT_users.push().setValue(my_nic);
+                                                            chatId = "Chat_" + my_nic + "_" + user_nic;
+                                                        } else { //Если чат уже существует (наш собеседник реньше нас его создал) - получаем его id
+                                                            chatId = "Chat_" + user_nic + "_" + my_nic;
+                                                        }
+                                                        //Добавляем в массив, создаем key pair, сохраняем.
+                                                        CHAT_NUMBER.add(chatId);
+                                                        generateKeys("RSA", 2048, CHAT_users, chatId, my_name, my_nic);
+                                                        saveDataContacts(my_nic);
+                                                        Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(DatabaseError databaseError) {
+                                                    }
+                                                };
+                                                ChatSearchRef.addListenerForSingleValueEvent(eventListener);
+                                                //}
+                                            }
+
+                                            if (flag == 0) { //По состоянию флага уведомляем пользователя об успехе операции
+                                                Toast.makeText(getActivity(), "Пользователь с ником \"" + user_nic + "\" не найден", Toast.LENGTH_SHORT).show();
+                                                btn_find_user1.setClickable(true);
                                             } else {
-                                                Toast.makeText(requireActivity(),
-                                                        "Неактуальная версия приложения. Требуется обновление", Toast.LENGTH_LONG).show();
-                                                Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
-                                                startActivity(intent);
-                                                requireActivity().finish();
-                                            }
-                                        } else { //Если версия актуальная
-
-                                            //загружаем сохраненные данные о контактах
-                                            loadDataContacts(my_nic);
-                                            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                            //contacts = new ArrayList<>();
-                                            //CONTACTS = new ArrayList<>();
-
-                                            ArrayList<MyMessage> messages = new ArrayList<MyMessage>();
-                                            //MESSAGES = new ArrayList<>();
-                                            loadDataMessages(my_nic);
-
-                                            String interlocutor_nic = "67889";
-
-                                            //В памяти хранится все сообщения. Нас же интересуют только те, что относятся к данному чату.
-                                            //Блок кода подгружает только те сообщения, которые нужны.
-                                            List<MyMessage> help_array_messages = new ArrayList<MyMessage>(map.values());
-                                            ArrayList<String> keys = new ArrayList<String>(map.keySet());
-                                            Collections.sort(keys);
-                                            for (int i = 0; i < keys.size(); i++) {
-                                                help_array_messages.add(map.get(keys.get(i)));
-                                            }
-                                            ArrayList<String> keys_after = new ArrayList<String>();
-                                            for (int i = 0; i < keys.size(); i++) {
-                                                if (keys.get(i).contains(("_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic))) {
-                                                    keys_after.add(keys.get(i));
-                                                    messages.add(help_array_messages.get(i));
-                                                } else if (keys.get(i).contains(("_(" + my_nic + ")_" + interlocutor_nic + "_" + my_nic))) {
-                                                    keys_after.add(keys.get(i));
-                                                    messages.add(help_array_messages.get(i));
+                                                Toast.makeText(getActivity(), "Пользователь " + get_name_from_base + " успешно найден!", Toast.LENGTH_SHORT).show();
+                                                ListView listView = rootView.findViewById(R.id.contacts_listview1);
+                                                NewContactsAdapter adapter = null;
+                                                try {
+                                                    adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
                                                 }
-                                            }
-
-                                            if (keys_after.size() != 0) {
-                                                MyMessage a = map.get(keys_after.get(keys_after.size() - 1));
-                                                if (a != null) {
-                                                    String b = a.getText();
-                                                }
-                                            }
-
-                                            //Установление адаптера для вывода информации о контактах
-                                            NewContactsAdapter adapter = null;
-                                            try {
-                                                //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
-                                                adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                            }
-                                            listView.setAdapter(adapter);
-                                            if (adapter != null) {
+                                                listView.setAdapter(adapter);
                                                 adapter.notifyDataSetChanged();
+                                                adapter.notifyDataSetInvalidated();
+                                                btn_find_user1.setClickable(true);
                                             }
+                                        }
 
-                                            //А вот теперь убираем разметку загрузки, отображавщуюся все это время, и начинаем демонстрировать главный экран
-                                            linlay_bar.setVisibility(View.GONE);
-                                            linlay_list.setVisibility(View.VISIBLE);
-                                            linlay_btn.setVisibility(View.VISIBLE);
+                                        @Override
+                                        public void onCancelled(@NotNull DatabaseError databaseError) {
+                                            btn_find_user1.setClickable(true);
+                                        }
+                                    });
+                                } else { //Если пользователь уже есть, уведомляем
+                                    Toast.makeText(getActivity(), "Пользователь уже есть в вашем списке", Toast.LENGTH_SHORT).show();
+                                    btn_find_user1.setClickable(true);
+                                }
+                            }
+                        } else { //Если поле пустое, уведомляем
+                            Toast.makeText(getActivity(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
+                            btn_find_user1.setClickable(true);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    btn_find_user1.setClickable(true);
+                }
+            }
+        });
 
-                                            LISTEN_REQUEST = database.getReference(secret_field + "/Request/" + my_nic);
-                                            NewContactsAdapter finalAdapter2 = adapter;
-                                            final ChildEventListener childEventListener = LISTEN_REQUEST.addChildEventListener(new ChildEventListener() {
-                                                @RequiresApi(api = Build.VERSION_CODES.O)
-                                                @Override
-                                                public void onChildAdded(@NotNull DataSnapshot datasnapshotLR, String previousChildName) {
+        //В приложение добавлен SwipeRefreshLayout. Фактически, в нем нет необходимости. Все данные о пользователях
+        //из списка контактов и так автоматически обновляются (listener расположен в NewContactsAdapter).
+        //Однако добавление может оказаться полезным в возможных непредусмотренных ситуациях.
+        mySwipeRefreshLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#FFFFFFFF"));
+        mySwipeRefreshLayout.setColorSchemeColors(Color.parseColor("#FF5085A5"));
+        mySwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() { //Обновляем адаптер, статус пользователя, с небольшой задержкой отключаем SwipeRefreshLayout.
+                        ListView listView = rootView.findViewById(R.id.contacts_listview1);
+                        NewContactsAdapter adapter = null;
+                        try {
+                            //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
+                            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        listView.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
 
-                                                    String new_user_nic = datasnapshotLR.getValue(String.class);
-                                                    Log.wtf("заявки", "новая заявка - " + new_user_nic);
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            public void run() {
+                                mySwipeRefreshLayout.setRefreshing(false);
+                            }
+                        }, 700);
+                    }
+                }
+        );
 
-                                                    try {
-                                                        DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + new_user_nic);
-                                                        IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                            @Override
-                                                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                                                                if (snapshot.exists()) {
-                                                                    String new_user_name = snapshot.getValue(String.class);
-                                                                    Log.wtf("заявки", "новая заявка - " + new_user_name);
+        //Условие длительного нажатия на элемент списка
+        NewContactsAdapter finalAdapter1 = adapter;
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                removeItemFromList(position);
+                return true;
+            }
 
-                                                                    //Получаем почту
-                                                                    //Создание предупреждения, уточняем намерения пользователя
-                                                                    AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-                                                                    alert.setTitle("Новый запрос");
-                                                                    alert.setMessage("Пользователь " + new_user_name + " (под ником " + new_user_nic + ") " +
-                                                                            "желает добавить вас в свой список контактов. Принять запрос?");
-                                                                    alert.setPositiveButton("Принять", new DialogInterface.OnClickListener() { //Принятие приглашения
-                                                                        @RequiresApi(api = Build.VERSION_CODES.O)
-                                                                        @Override
-                                                                        public void onClick(DialogInterface dialog, int which) {
+            private void removeItemFromList(int position) {
+                //Уточняем намерения пользователя
+                AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+                alert.setTitle("Удаление");
+                alert.setMessage("Вы точно хотите удалить данного пользователя из списка своих контактов?");
+                alert.setPositiveButton("Удалить", new DialogInterface.OnClickListener() { //Пользователь хочет удалить контакт
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
 
-                                                                            if (!CONTACTS.contains(new_user_nic)) { //Если в списке контактов такого пользователя нет
-
-                                                                                //Добавление в список контактов, обновление адаптера
-                                                                                contacts.add(new MyContacts(new_user_name, "offline"));
-                                                                                CONTACTS.add(new_user_nic);
-                                                                                finalAdapter2.notifyDataSetChanged();
-
-                                                                                //Составление id чата (подробнее - ниже при самосотоятельном добавлении), создание публичного ключа, отправление его в БД, сохранение
-                                                                                chatId = "Chat_" + new_user_nic + "_" + my_nic;
-                                                                                //chatId = "Chat_" + new_user_nic + "_" + my_name;
-                                                                                CHAT_NUMBER.add(chatId);
-                                                                                CHAT_users = database.getReference(secret_field + "/Internet_Messages/" + chatId);
-                                                                                generateKeys("RSA", 2048, CHAT_users, chatId, my_name, my_nic);
-                                                                                saveDataContacts(my_nic);
-                                                                                Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
-
-                                                                                //Обновление адаптера
-                                                                                ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                                                                listView.setAdapter(finalAdapter2);
-                                                                                finalAdapter2.notifyDataSetChanged();
-
-                                                                            } else { //Если данный пользователь уже есть в списке контактов
-                                                                                Toast.makeText(getActivity(), "Пользователь уже есть в вашем списке", Toast.LENGTH_SHORT).show();
-                                                                            }
-
-                                                                            removerequest(secret_field, my_nic);
-                                                                        }
-                                                                    });
-                                                                    alert.setNegativeButton("Отклонить", new DialogInterface.OnClickListener() { //Отказ
-                                                                        @Override
-                                                                        public void onClick(DialogInterface dialog, int which) {
-
-                                                                            removerequest(secret_field, my_nic);
-                                                                            dialog.dismiss();
-                                                                        }
-                                                                    });
-                                                                    alert.show();
-                                                                }
-                                                            }
-
-                                                            @Override
-                                                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                                                            }
-                                                        });
-                                                    } catch (Exception e) {
-                                                        e.printStackTrace();
-                                                    }
-                                                }
-
-                                                @Override
-                                                public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                                }
-
-                                                @Override
-                                                public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
-                                                }
-
-                                                @Override
-                                                public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                                }
-
-                                                @Override
-                                                public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                                                }
-                                            });
-
-                                            //Установление слушателя событий нажатия кнопки "Искать"
-                                            NewContactsAdapter finalAdapter = adapter;
-                                            btn_find_user1.setOnClickListener(new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    try {
-                                                        if (hasConnection(requireActivity())) { //Если интернета нет, найти через него пользователя не получится
-                                                            Toast.makeText(requireActivity(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
-                                                        } else {
-
-                                                            //Временно отключаем кнопку, чтобы при множественном нажатии не добавлялись тысячи одинаковых контактов,
-                                                            //ссылающихся на один и тот же чат. Спасибо Никите Козорезу за нахождение сей ошибки.
-                                                            btn_find_user1.setClickable(false);
-
-                                                            //Получаем имя, фамилию от Edittext
-                                                            user_nic = find_username1.getText().toString();
-                                                            //user_email = find_useremail1.getText().toString();
-
-                                                            //Очищаем переменные от лишнего мусора - пробелов в начале и конце
-                                                            ReplaceRepeat replaceRepeat = new ReplaceRepeat();
-                                                            //user_email = replaceRepeat.ReplaceRepeatStr(user_email);
-                                                            user_nic = replaceRepeat.ReplaceRepeatStr(user_nic);
-
-                                                            Log.wtf("usernic", user_nic);
-                                                            Log.wtf("mynic", my_nic);
-
-                                                            if (//!user_email.equals("") &&
-                                                                //!user_email.equals(" ") &&
-                                                                //!user_email.equals("/n") &&
-                                                                    !user_nic.equals("") &&
-                                                                            !user_nic.equals(" ") &&
-                                                                            !user_nic.equals("/n")) { //Если поле не пустое (в различных конфигарациях)
-
-                                                                if (user_nic.equals(my_nic)) { //Себя добавить в список контактов нельзя
-                                                                    if (!CONTACTS.contains(user_nic)) {
-
-                                                                        //Появление Snackbar
-                                                                        Snackbar snackbar = Snackbar.make(v, "Здесь можно хранить приватную информацию", Snackbar.LENGTH_INDEFINITE);
-                                                                        snackbar.setAction("Понятно", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
-                                                                            @Override
-                                                                            public void onClick(View v) {
-
-                                                                                //Добавление в спиок контактов, поднятие флажка
-                                                                                contacts.add(new MyContacts(my_name, "itsme"));
-                                                                                CONTACTS.add(user_nic);
-                                                                                finalAdapter.notifyDataSetChanged();
-                                                                                flag = 1;
-                                                                                find_username1.setText("");
-                                                                                //Добавляем в массив, создаем key pair, сохраняем.
-                                                                                CHAT_NUMBER.add("Chat_" + my_nic + "_" + my_nic);
-                                                                                saveDataContacts(my_nic);
-                                                                                Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
-                                                                            }
-                                                                        });
-                                                                        snackbar.setTextColor(0XFFFFFFFF);
-                                                                        snackbar.setBackgroundTint(0XFF31708E);
-                                                                        snackbar.setActionTextColor(0XFFFFFFFF);
-                                                                        snackbar.show();
-
-                                                                    } else {
-                                                                        Toast.makeText(getActivity(), "Вами уже была создана переписка с самим собой", Toast.LENGTH_SHORT).show();
-                                                                    }
-                                                                    btn_find_user1.setClickable(true);
-                                                                    //Toast.makeText(getActivity(), "Невозможно добавить себя в список контактов", Toast.LENGTH_SHORT).show();
-
-                                                                } else {
-
-                                                                    //Если такого контакто еще нет
-                                                                    if (!CONTACTS.contains(user_nic)) {
-                                                                        flag = 0;
-                                                                        FLAG = 0;
-
-                                                                        //Получение доступа к БД Firebase. Проверяем, есть ли такой зарегестрированный пользователь в БД.
-                                                                        DatabaseReference UserSearch = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + user_nic);
-                                                                        UserSearch.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                                            @Override
-                                                                            public void onDataChange(DataSnapshot data_Snapshot) {
-
-                                                                                //Получение его email-адреса. Данные хранятся в таком формате: Артем Романович: "artrom170@gmail.com".
-                                                                                //Поэтому находим по имени и смотрим, как соотносятся почта БД с Edittext-ом.
-                                                                                String get_name_from_base = data_Snapshot.getValue(String.class);
-
-                                                                                if (data_Snapshot.exists()) {
-
-                                                                                    //Если адреса совпадают
-                                                                                    //if (user_email.equals(get_email_from_base)) {
-                                                                                    String status = "offline";
-
-                                                                                    //Добавление в спиок контактов, поднятие флажка
-                                                                                    contacts.add(new MyContacts(get_name_from_base, status));
-                                                                                    CONTACTS.add(user_nic);
-                                                                                    finalAdapter.notifyDataSetChanged();
-                                                                                    flag = 1;
-                                                                                    find_username1.setText("");
-
-                                                                                    //Получение доступа к БД Firebase. Ищем чат.
-                                                                                    chatId = "Chat_" + my_nic + "_" + user_nic;
-                                                                                    DatabaseReference ChatSearch1 = FirebaseDatabase.getInstance().getReference(secret_field + "/Internet_Messages");
-                                                                                    DatabaseReference ChatSearchRef = ChatSearch1.child("Chat_" + user_nic + "_" + my_nic);
-                                                                                    ValueEventListener eventListener = new ValueEventListener() {
-                                                                                        @RequiresApi(api = Build.VERSION_CODES.O)
-                                                                                        @Override
-                                                                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                                                                            if (!dataSnapshot.exists()) { //Если чата нет (мы первые нашли пользователя) - создаем
-                                                                                                CHAT_users = database.getReference(secret_field + "/Internet_Messages/" + chatId);
-                                                                                                //ContactsFragment.this.CHAT_users.push().setValue(user_nic);
-                                                                                                //ContactsFragment.this.CHAT_users.push().setValue(my_nic);
-                                                                                                chatId = "Chat_" + my_nic + "_" + user_nic;
-                                                                                            } else { //Если чат уже существует (наш собеседник реньше нас его создал) - получаем его id
-                                                                                                chatId = "Chat_" + user_nic + "_" + my_nic;
-                                                                                            }
-                                                                                            //Добавляем в массив, создаем key pair, сохраняем.
-                                                                                            CHAT_NUMBER.add(chatId);
-                                                                                            generateKeys("RSA", 2048, CHAT_users, chatId, my_name, my_nic);
-                                                                                            saveDataContacts(my_nic);
-                                                                                            Log.wtf(TAG, String.valueOf(CHAT_NUMBER));
-                                                                                        }
-
-                                                                                        @Override
-                                                                                        public void onCancelled(DatabaseError databaseError) {
-                                                                                        }
-                                                                                    };
-                                                                                    ChatSearchRef.addListenerForSingleValueEvent(eventListener);
-                                                                                    //}
-                                                                                }
-
-                                                                                if (flag == 0) { //По состоянию флага уведомляем пользователя об успехе операции
-                                                                                    Toast.makeText(getActivity(), "Пользователь с ником \"" + user_nic + "\" не найден", Toast.LENGTH_SHORT).show();
-                                                                                    btn_find_user1.setClickable(true);
-                                                                                } else {
-                                                                                    Toast.makeText(getActivity(), "Пользователь " + get_name_from_base + " успешно найден!", Toast.LENGTH_SHORT).show();
-                                                                                    ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                                                                    NewContactsAdapter adapter = null;
-                                                                                    try {
-                                                                                        adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
-                                                                                    } catch (IOException e) {
-                                                                                        e.printStackTrace();
-                                                                                    }
-                                                                                    listView.setAdapter(adapter);
-                                                                                    adapter.notifyDataSetChanged();
-                                                                                    adapter.notifyDataSetInvalidated();
-                                                                                    btn_find_user1.setClickable(true);
-                                                                                }
-                                                                            }
-
-                                                                            @Override
-                                                                            public void onCancelled(@NotNull DatabaseError databaseError) {
-                                                                                btn_find_user1.setClickable(true);
-                                                                            }
-                                                                        });
-                                                                    } else { //Если пользователь уже есть, уведомляем
-                                                                        Toast.makeText(getActivity(), "Пользователь уже есть в вашем списке", Toast.LENGTH_SHORT).show();
-                                                                        btn_find_user1.setClickable(true);
-                                                                    }
-                                                                }
-                                                            } else { //Если поле пустое, уведомляем
-                                                                Toast.makeText(getActivity(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
-                                                                btn_find_user1.setClickable(true);
-                                                            }
-                                                        }
-                                                    } catch (Exception e) {
-                                                        e.printStackTrace();
-                                                        btn_find_user1.setClickable(true);
-                                                    }
-                                                }
-                                            });
-
-                                            //В приложение добавлен SwipeRefreshLayout. Фактически, в нем нет необходимости. Все данные о пользователях
-                                            //из списка контактов и так автоматически обновляются (listener расположен в NewContactsAdapter).
-                                            //Однако добавление может оказаться полезным в возможных непредусмотренных ситуациях.
-                                            mySwipeRefreshLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#FFFFFFFF"));
-                                            mySwipeRefreshLayout.setColorSchemeColors(Color.parseColor("#FF5085A5"));
-                                            mySwipeRefreshLayout.setOnRefreshListener(
-                                                    new SwipeRefreshLayout.OnRefreshListener() {
-                                                        @Override
-                                                        public void onRefresh() { //Обновляем адаптер, статус пользователя, с небольшой задержкой отключаем SwipeRefreshLayout.
-                                                            ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                                            NewContactsAdapter adapter = null;
-                                                            try {
-                                                                //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
-                                                                adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
-                                                            } catch (IOException e) {
-                                                                e.printStackTrace();
-                                                            }
-                                                            listView.setAdapter(adapter);
-                                                            adapter.notifyDataSetChanged();
-
-                                                            Handler handler = new Handler();
-                                                            handler.postDelayed(new Runnable() {
-                                                                public void run() {
-                                                                    mySwipeRefreshLayout.setRefreshing(false);
-                                                                }
-                                                            }, 700);
-                                                        }
-                                                    }
-                                            );
-
-                                            //Условие длительного нажатия на элемент списка
-                                            NewContactsAdapter finalAdapter1 = adapter;
-                                            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                                                @Override
-                                                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                                                    removeItemFromList(position);
-                                                    return true;
-                                                }
-
-                                                private void removeItemFromList(int position) {
-                                                    //Уточняем намерения пользователя
-                                                    AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-                                                    alert.setTitle("Удаление");
-                                                    alert.setMessage("Вы точно хотите удалить данного пользователя из списка своих контактов?");
-                                                    alert.setPositiveButton("Удалить", new DialogInterface.OnClickListener() { //Пользователь хочет удалить контакт
-                                                        @Override
-                                                        public void onClick(DialogInterface dialog, int which) {
-
-                                                            //Впоследствии можно дореализовать удаление сообщений, пока что они хранятся.
+                        //Впоследствии можно дореализовать удаление сообщений, пока что они хранятся.
                                                             /*InternetActivity internetActivity = new InternetActivity();
                                                             internetActivity.loadDataMessages();
 
@@ -653,210 +728,157 @@ public class ContactsFragment extends Fragment {
                                                                 }
                                                             }*/
 
-                                                            //Удаление, сохранение
-                                                            contacts.remove(finalAdapter1.getItem(position));
-                                                            CONTACTS.remove(position);
-                                                            CHAT_NUMBER.remove(position);
+                        //Удаление, сохранение
+                        contacts.remove(finalAdapter1.getItem(position));
+                        CONTACTS.remove(position);
+                        CHAT_NUMBER.remove(position);
 
-                                                            ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                                            NewContactsAdapter adapter = null;
-                                                            try {
-                                                                adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
-                                                            } catch (IOException e) {
-                                                                e.printStackTrace();
-                                                            }
-                                                            listView.setAdapter(adapter);
-                                                            adapter.notifyDataSetChanged();
-                                                            adapter.notifyDataSetInvalidated();
-                                                            saveDataContacts(my_nic);
-                                                        }
-                                                    });
-                                                    alert.setNegativeButton("Отмена", new DialogInterface.OnClickListener() { //Пользователь передумал
-                                                        @Override
-                                                        public void onClick(DialogInterface dialog, int which) {
-                                                            //Отмена
-                                                            dialog.dismiss();
-                                                        }
-                                                    });
-                                                    alert.show();
+                        ListView listView = rootView.findViewById(R.id.contacts_listview1);
+                        NewContactsAdapter adapter = null;
+                        try {
+                            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        listView.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
+                        adapter.notifyDataSetInvalidated();
+                        saveDataContacts(my_nic);
+                    }
+                });
+                alert.setNegativeButton("Отмена", new DialogInterface.OnClickListener() { //Пользователь передумал
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //Отмена
+                        dialog.dismiss();
+                    }
+                });
+                alert.show();
+            }
+        });
+
+        //Условие простого нажатия на элемент списка (клика)
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View itemClicked, int position, long id) {
+
+                listView.setClickable(false);
+
+                if (hasConnection(requireActivity())) {
+                    Toast.makeText(getActivity(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
+                } else { //При наличии интернета запускается InternetActivity
+
+                    LISTEN_REQUEST = database.getReference(secret_field + "/Request/" + CONTACTS.get(position));
+
+                    DatabaseReference CHANGE_FIELD;
+                    CHANGE_FIELD = database.getReference(secret_field + "/Request/" + CONTACTS.get(position));
+                    CHANGE_FIELD.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
+
+                    final int[] listen_to_internet = {1};
+
+                    final ChildEventListener childEventListener = LISTEN_REQUEST.addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(@NonNull @NotNull DataSnapshot snapshot123, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                            if (snapshot123.exists()) { //Если приглашение имеется
+
+                                String somebody_nic = snapshot123.getValue(String.class);
+
+                                assert somebody_nic != null;
+                                if (!somebody_nic.equals(my_nic)) {
+
+                                    DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + CONTACTS.get(position));
+                                    IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                            if (snapshot.exists()) {
+                                                String interlocutor_name = snapshot.getValue(String.class);
+                                                if (listen_to_internet[0] == 1) {
+
+                                                    Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
+
+                                                    String current_interlocutor = CONTACTS.get(position);
+                                                    intent.putExtra("current_interlocutor", current_interlocutor);
+
+                                                    intent.putExtra("nameinterlocutor", interlocutor_name);
+
+                                                    String current_chat = CHAT_NUMBER.get(position);
+                                                    intent.putExtra("current_chat", current_chat);
+                                                    startActivity(intent);
+
+                                                    linlay_bar.setVisibility(View.VISIBLE);
+                                                    linlay_list.setVisibility(View.GONE);
                                                 }
-                                            });
+                                            }
+                                        }
 
-                                            //Условие простого нажатия на элемент списка (клика)
-                                            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                                @Override
-                                                public void onItemClick(AdapterView<?> parent, View itemClicked, int position, long id) {
+                                        @Override
+                                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                                        }
+                                    });
+                                } else {
+                                    listen_to_internet[0] = 0;
 
-                                                    listView.setClickable(false);
+                                    if (toast != null) {
+                                        toast.cancel();
+                                    }
+                                    toast = Toast.makeText(getActivity(), "Вы отправили пользователю запрос, ожидайте его принятия", Toast.LENGTH_SHORT);
+                                    toast.show();
+                                }
+                            } else {
 
-                                                    if (hasConnection(requireActivity())) {
-                                                        Toast.makeText(getActivity(), "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
-                                                    } else { //При наличии интернета запускается InternetActivity
+                                DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + CONTACTS.get(position));
+                                IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String interlocutor_name = snapshot.getValue(String.class);
 
-                                                        LISTEN_REQUEST = database.getReference(secret_field + "/Request/" + CONTACTS.get(position));
+                                            if (listen_to_internet[0] == 1) {
 
-                                                        DatabaseReference CHANGE_FIELD;
-                                                        CHANGE_FIELD = database.getReference(secret_field + "/Request/" + CONTACTS.get(position));
-                                                        CHANGE_FIELD.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
+                                                Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
 
-                                                        final int[] listen_to_internet = {1};
+                                                String current_interlocutor = CONTACTS.get(position);
+                                                intent.putExtra("current_interlocutor", current_interlocutor);
 
-                                                        final ChildEventListener childEventListener = LISTEN_REQUEST.addChildEventListener(new ChildEventListener() {
-                                                            @Override
-                                                            public void onChildAdded(@NonNull @NotNull DataSnapshot snapshot123, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                                                if (snapshot123.exists()) { //Если приглашение имеется
+                                                intent.putExtra("nameinterlocutor", interlocutor_name);
 
-                                                                    String somebody_nic = snapshot123.getValue(String.class);
+                                                String current_chat = CHAT_NUMBER.get(position);
+                                                intent.putExtra("current_chat", current_chat);
+                                                startActivity(intent);
 
-                                                                    assert somebody_nic != null;
-                                                                    if (!somebody_nic.equals(my_nic)) {
-
-                                                                        DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + CONTACTS.get(position));
-                                                                        IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                                            @Override
-                                                                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                                                                                if (snapshot.exists()) {
-                                                                                    String interlocutor_name = snapshot.getValue(String.class);
-                                                                                    if (listen_to_internet[0] == 1) {
-
-                                                                                        Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
-
-                                                                                        String current_interlocutor = CONTACTS.get(position);
-                                                                                        intent.putExtra("current_interlocutor", current_interlocutor);
-
-                                                                                        intent.putExtra("nameinterlocutor", interlocutor_name);
-
-                                                                                        String current_chat = CHAT_NUMBER.get(position);
-                                                                                        intent.putExtra("current_chat", current_chat);
-                                                                                        startActivity(intent);
-
-                                                                                        linlay_bar.setVisibility(View.VISIBLE);
-                                                                                        linlay_list.setVisibility(View.GONE);
-                                                                                    }
-                                                                                }
-                                                                            }
-
-                                                                            @Override
-                                                                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                                                                            }
-                                                                        });
-                                                                    } else {
-                                                                        listen_to_internet[0] = 0;
-
-                                                                        if (toast != null) {
-                                                                            toast.cancel();
-                                                                        }
-                                                                        toast = Toast.makeText(getActivity(), "Вы отправили пользователю запрос, ожидайте его принятия", Toast.LENGTH_SHORT);
-                                                                        toast.show();
-                                                                    }
-                                                                } else {
-
-                                                                    DatabaseReference IsThisNick = FirebaseDatabase.getInstance().getReference(secret_field + "/Contacts/" + CONTACTS.get(position));
-                                                                    IsThisNick.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                                        @Override
-                                                                        public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                                                                            if (snapshot.exists()) {
-                                                                                String interlocutor_name = snapshot.getValue(String.class);
-
-                                                                                if (listen_to_internet[0] == 1) {
-
-                                                                                    Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
-
-                                                                                    String current_interlocutor = CONTACTS.get(position);
-                                                                                    intent.putExtra("current_interlocutor", current_interlocutor);
-
-                                                                                    intent.putExtra("nameinterlocutor", interlocutor_name);
-
-                                                                                    String current_chat = CHAT_NUMBER.get(position);
-                                                                                    intent.putExtra("current_chat", current_chat);
-                                                                                    startActivity(intent);
-
-                                                                                    linlay_bar.setVisibility(View.VISIBLE);
-                                                                                    linlay_list.setVisibility(View.GONE);
-                                                                                }
-                                                                            }
-                                                                        }
-
-                                                                        @Override
-                                                                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
-
-                                                                        }
-                                                                    });
-                                                                }
-                                                            }
-
-                                                            @Override
-                                                            public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot123, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                                            }
-
-                                                            @Override
-                                                            public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
-                                                            }
-
-                                                            @Override
-                                                            public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                                            }
-
-                                                            @Override
-                                                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            });
+                                                linlay_bar.setVisibility(View.VISIBLE);
+                                                linlay_list.setVisibility(View.GONE);
+                                            }
                                         }
                                     }
 
                                     @Override
-                                    public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                                    }
+                                    public void onCancelled(@NonNull @NotNull DatabaseError error) {
 
-                                    @Override
-                                    public void onChildRemoved(DataSnapshot snapshot) {
-                                    }
-
-                                    @Override
-                                    public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError error) {
                                     }
                                 });
-                            } else {
-                                if (!status.equals("NO")) {
-                                    Toast.makeText(requireActivity(), status, Toast.LENGTH_LONG).show();
-                                    Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
-                                    startActivity(intent);
-                                    requireActivity().finish();
-                                }
                             }
-                        } else {
-                            Log.wtf("Capable", "!incapable!");
                         }
-                    }
 
-                    @Override
-                    public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                    }
+                        @Override
+                        public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot123, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                        }
 
-                    @Override
-                    public void onChildRemoved(DataSnapshot snapshot) {
-                    }
+                        @Override
+                        public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
+                        }
 
-                    @Override
-                    public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-                    }
+                        @Override
+                        public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                        }
 
-                    @Override
-                    public void onCancelled(DatabaseError error) {
-                    }
-                });
+                        @Override
+                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                        }
+                    });
+                }
             }
-        }
-
-        //Отрисовка пользовательского интерфейса для фрагмента
-        return rootView;
+        });
     }
 
     //Метод, проверяющий соединение с интернетом
@@ -1024,8 +1046,9 @@ public class ContactsFragment extends Fragment {
     }
 
     //Метод, сохраняющий key pair
-    public byte[] saveKeyPair(String chatId, PrivateKey privateKey, PublicKey publicKey, String
-            my_name, DatabaseReference CHAT_users, String my_nic) throws Exception {
+    public byte[] saveKeyPair(String chatId, PrivateKey privateKey, PublicKey
+            publicKey, String
+                                      my_name, DatabaseReference CHAT_users, String my_nic) throws Exception {
 
         //Кодировка в байты
         byte[] privateKeyBytes = privateKey.getEncoded();

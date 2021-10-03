@@ -1,11 +1,14 @@
 package com.example.fludrex;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 
@@ -82,6 +85,19 @@ public class NewMessageAdapterMoreLays extends ArrayAdapter<MyMessage> {
 
         viewHolder.name_message.setText(message.getName());
         viewHolder.text_message.setText(message.getText());
+        String s = message.getText();
+        if (s.charAt(0) == '|' && s.charAt(1) == 'r' && s.charAt(2) == '|' &&
+                s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'r' && s.charAt(s.length() - 1) == '|'
+        ) {
+            viewHolder.text_message.setTextColor(Color.parseColor("#FF1100"));
+            //viewHolder.text_message.setTextSize(50);
+        }
+        if (s.charAt(0) == '|' && s.charAt(1) == 'b' && s.charAt(2) == '|' &&
+                s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'b' && s.charAt(s.length() - 1) == '|'
+        ) {
+            viewHolder.text_message.setTextColor(Color.parseColor("#FF03DAC5"));
+            //viewHolder.text_message.setTextSize(50);
+        }
         viewHolder.time_message.setText(message.getTime());
 
         return convertView;

@@ -2,10 +2,7 @@ package com.example.fludrex;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.widget.TextViewCompat;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -16,8 +13,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
@@ -27,11 +22,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.util.Strings;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -49,12 +41,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
-
 import org.jetbrains.annotations.NotNull;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -67,9 +56,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-
 import javax.crypto.Cipher;
-
 import static android.content.ContentValues.TAG;
 
 /*
@@ -537,225 +524,228 @@ public class RegistrationActivity extends AppCompatActivity {
                 @Override
                 public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
                     if (datasnapshot.exists()) {
+                        try {
+                            //Получаем статус
+                            String status = datasnapshot.getValue(String.class);
+                            Log.wtf("Capable", status);
 
-                        //Получаем статус
-                        String status = datasnapshot.getValue(String.class);
-                        Log.wtf("Capable", status);
-
-                        //Если на сервере техн. режим, пользователю запрещается доступ к приложению
-                        if (status.equals("NO")) {
-                            Toast.makeText(getApplicationContext(), "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
-                            Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                            startActivity(intent);
-                            finish();
-                        } else {
-                            if (!status.equals("YES")){
-                                Toast.makeText(getApplicationContext(), status, Toast.LENGTH_LONG).show();
+                            //Если на сервере техн. режим, пользователю запрещается доступ к приложению
+                            if (status.equals("NO")) {
+                                Toast.makeText(getApplicationContext(), "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
+                                Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                if (!status.equals("YES")) {
+                                    Toast.makeText(getApplicationContext(), status, Toast.LENGTH_LONG).show();
+                                }
                             }
-                        }
-                        if (status.equals("YES")) {//Если работы на сервере не ведутся
+                            if (status.equals("YES")) {//Если работы на сервере не ведутся
 
-                            //Получение доступа к БД Firebase. Определяем последнюю версию приложения.
-                            VERSION = database.getReference(secret_field + "/Status/Version");
-                            final ChildEventListener childEventListener2 = VERSION.addChildEventListener(new ChildEventListener() {
-                                @SuppressLint("ResourceType")
-                                @Override
-                                public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
+                                //Получение доступа к БД Firebase. Определяем последнюю версию приложения.
+                                VERSION = database.getReference(secret_field + "/Status/Version");
+                                final ChildEventListener childEventListener2 = VERSION.addChildEventListener(new ChildEventListener() {
+                                    @SuppressLint("ResourceType")
+                                    @Override
+                                    public void onChildAdded(DataSnapshot datasnapshot, String previousChildName) {
 
-                                    //Получаем последнюю версию
-                                    int last_version = datasnapshot.getValue(Integer.class);
-                                    Log.wtf("Version", String.valueOf(last_version));
+                                        //Получаем последнюю версию
+                                        int last_version = datasnapshot.getValue(Integer.class);
+                                        Log.wtf("Version", String.valueOf(last_version));
 
-                                    //Данные массивы нужны просто для корретного отображения информация через Toast.
-                                    String[] versionnumber = {" ", "(первая) ", "(вторая) ", "(третья) ", "(четвертая) ", "(пятая) "};
-                                    String[] versionnumber2 = {"", "первой", "второй", "третьей", "четвертой", "пятой"};
+                                        //Данные массивы нужны просто для корретного отображения информация через Toast.
+                                        String[] versionnumber = {" ", "(первая) ", "(вторая) ", "(третья) ", "(четвертая) ", "(пятая) "};
+                                        String[] versionnumber2 = {"", "первой", "второй", "третьей", "четвертой", "пятой"};
 
-                                    if (last_version != my_version) {
+                                        if (last_version != my_version) {
 
-                                        //Если версия не последняя, пользователь об этом уведомляется. Доступ запрещается
-                                        //в связи с возможными проблемами при несовместимости версий
-                                        if (last_version < versionnumber2.length) {
-                                            Toast.makeText(getApplicationContext(), "Неактуальная " + versionnumber[my_version] + "версия приложения. " +
-                                                    "Требуется обновление до " + versionnumber2[last_version], Toast.LENGTH_LONG).show();
-                                            Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                                            startActivity(intent);
-                                            finish();
-                                        } else {
-                                            Toast.makeText(getApplicationContext(), "Неактуальная версия приложения. Требуется обновление", Toast.LENGTH_LONG).show();
-                                            Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                                            startActivity(intent);
-                                            finish();
-                                        }
-                                    } else {
-
-                                        currentUser = mAuth.getCurrentUser();
-
-                                        //Обновляем текущего пользователя Firebase
-                                        Task<Void> usertask;
-                                        if (currentUser != null) {
-                                            usertask = currentUser.reload();
-                                            usertask.addOnSuccessListener(new OnSuccessListener() {
-                                                @Override
-                                                public void onSuccess(Object o) {
-                                                    currentUser = mAuth.getCurrentUser();
-                                                }
-                                            });
-                                        }
-
-                                        ///user_name = set_name.getText().toString();
-                                        ///user_password = set_password.getText().toString();
-                                        ///user_email = set_email.getText().toString();
-                                        ///user_nic = set_nic.getText().toString();
-
-                                        /////Очищаем переменные от лишнего мусора - пробелов в начале и конце
-                                        ///ReplaceRepeat replaceRepeat = new ReplaceRepeat();
-                                        ///user_name = replaceRepeat.ReplaceRepeatStr(user_name);
-                                        ///user_password = replaceRepeat.ReplaceRepeatStr(user_password);
-                                        ///user_email = replaceRepeat.ReplaceRepeatStr(user_email);
-                                        ///user_nic = replaceRepeat.ReplaceRepeatStr(user_nic);
-
-                                        //if (!user_email.equals("") &&
-                                        //        !user_email.equals(" ") &&
-                                        //        !user_email.equals("/n") &&
-
-//                                        //        !user_password.equals("") &&
-                                        //        !user_password.equals(" ") &&
-                                        //        !user_password.equals("/n") &&
-
-//                                        //        !user_nic.equals("") &&
-                                        //        !user_nic.equals(" ") &&
-                                        //        !user_nic.equals("/n") &&
-
-//                                        //        !user_name.equals("") &&
-                                        //        !user_name.equals(" ") &&
-                                        //        !user_name.equals("/n")) {
-                                        //    if (user_name.length() <= 20) {
-                                        //        if (user_password.length() >= 8) {
-
-                                        //Если email подтвержден
-                                        if (currentUser != null) {
-                                            if (currentUser.isEmailVerified()) {
-                                                if (toast != null) {
-                                                    toast.cancel();
-                                                }
-                                                toast = Toast.makeText(RegistrationActivity.this, "Аккаунт успешно создан", Toast.LENGTH_LONG);
-                                                toast.show();
-
-                                                try {
-                                                    //Чтение поля, под которым хранится вся информация БД.
-                                                    BufferedReader br_f = new BufferedReader(new InputStreamReader(openFileInput("file_secret_field")));
-                                                    secret_field = br_f.readLine();
-                                                    br_f.close();
-
-                                                    BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_nic")));
-                                                    user_nic = br_nn.readLine();
-                                                    br_nn.close();
-                                                    BufferedReader br_n = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_name")));
-                                                    user_name = br_n.readLine();
-                                                    br_n.close();
-                                                    BufferedReader br_p = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_password")));
-                                                    user_password = br_p.readLine();
-                                                    br_p.close();
-                                                    BufferedReader br_e = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_email")));
-                                                    user_email = br_e.readLine();
-                                                    br_e.close();
-
-                                                    Log.wtf("all_params", user_nic + user_name + user_password + user_email);
-
-                                                    generateKeys("RSA", 2048, user_password, user_nic);
-
-                                                    //Получение доступа к БД Firebase. Отправка пользовательских данных.
-                                                    NewContact = database.getReference(secret_field + "/Contacts/");
-                                                    NewContact.child(user_nic).setValue(user_name);
-                                                    NameEmail = database.getReference(secret_field + "/NameEmail/");
-                                                    NameEmail.child(user_name).setValue(user_email);
-                                                    User_name = database.getReference(secret_field + "/Users/" + user_nic);
-                                                    User_name.child("name").setValue(user_name);
-                                                    User_nic = database.getReference(secret_field + "/Users/" + user_nic);
-                                                    User_nic.child("nickname").setValue(user_nic);
-                                                    User_email = database.getReference(secret_field + "/Users/" + user_nic);
-                                                    User_email.child("email").setValue(user_email);
-
-                                                    //Запись в файлы пользовательских данных.
-                                                    BufferedWriter bnn = new BufferedWriter(new OutputStreamWriter(
-                                                            openFileOutput(file_nic, MODE_PRIVATE)));
-                                                    bnn.write(user_nic);
-                                                    bnn.close();
-                                                    BufferedWriter bn = new BufferedWriter(new OutputStreamWriter(
-                                                            openFileOutput(file_name + user_nic, MODE_PRIVATE)));
-                                                    bn.write(user_name);
-                                                    bn.close();
-                                                    BufferedWriter bp = new BufferedWriter(new OutputStreamWriter(
-                                                            openFileOutput(file_password + user_nic, MODE_PRIVATE)));
-                                                    bp.write(user_password);
-                                                    bp.close();
-                                                    BufferedWriter be = new BufferedWriter(new OutputStreamWriter(
-                                                            openFileOutput(file_email + user_nic, MODE_PRIVATE)));
-                                                    be.write(user_email);
-                                                    be.close();
-
-                                                    BufferedWriter brnn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_nic", MODE_PRIVATE)));
-                                                    BufferedWriter brn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_name", MODE_PRIVATE)));
-                                                    BufferedWriter brp = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_password", MODE_PRIVATE)));
-                                                    BufferedWriter bre = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_email", MODE_PRIVATE)));
-                                                    brnn.flush();
-                                                    brnn.close();
-                                                    brn.flush();
-                                                    brn.close();
-                                                    brp.flush();
-                                                    brp.close();
-                                                    bre.flush();
-                                                    bre.close();
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-
-                                                //Переход в основную акивность BottomNavigationActivity
+                                            //Если версия не последняя, пользователь об этом уведомляется. Доступ запрещается
+                                            //в связи с возможными проблемами при несовместимости версий
+                                            if (last_version < versionnumber2.length) {
+                                                Toast.makeText(getApplicationContext(), "Неактуальная " + versionnumber[my_version] + "версия приложения. " +
+                                                        "Требуется обновление до " + versionnumber2[last_version], Toast.LENGTH_LONG).show();
                                                 Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                intent.putExtra("eT", user_name);
                                                 startActivity(intent);
                                                 finish();
-
                                             } else {
-                                                if (toast != null) {
-                                                    toast.cancel();
-                                                }
-                                                btn_confirm.setText("подтвердить аккаунт");
-                                                toast = Toast.makeText(getApplicationContext(), "Если вы перешли по ссылке, нажмите повторно", Toast.LENGTH_LONG);
-                                                toast.show();
+                                                Toast.makeText(getApplicationContext(), "Неактуальная версия приложения. Требуется обновление", Toast.LENGTH_LONG).show();
+                                                Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
+                                                startActivity(intent);
+                                                finish();
                                             }
                                         } else {
-                                            registrationClick(btn_confirm);
+
+                                            currentUser = mAuth.getCurrentUser();
+
+                                            //Обновляем текущего пользователя Firebase
+                                            Task<Void> usertask;
+                                            if (currentUser != null) {
+                                                usertask = currentUser.reload();
+                                                usertask.addOnSuccessListener(new OnSuccessListener() {
+                                                    @Override
+                                                    public void onSuccess(Object o) {
+                                                        currentUser = mAuth.getCurrentUser();
+                                                    }
+                                                });
+                                            }
+
+                                            ///user_name = set_name.getText().toString();
+                                            ///user_password = set_password.getText().toString();
+                                            ///user_email = set_email.getText().toString();
+                                            ///user_nic = set_nic.getText().toString();
+
+                                            /////Очищаем переменные от лишнего мусора - пробелов в начале и конце
+                                            ///ReplaceRepeat replaceRepeat = new ReplaceRepeat();
+                                            ///user_name = replaceRepeat.ReplaceRepeatStr(user_name);
+                                            ///user_password = replaceRepeat.ReplaceRepeatStr(user_password);
+                                            ///user_email = replaceRepeat.ReplaceRepeatStr(user_email);
+                                            ///user_nic = replaceRepeat.ReplaceRepeatStr(user_nic);
+
+                                            //if (!user_email.equals("") &&
+                                            //        !user_email.equals(" ") &&
+                                            //        !user_email.equals("/n") &&
+
+//                                        //        !user_password.equals("") &&
+                                            //        !user_password.equals(" ") &&
+                                            //        !user_password.equals("/n") &&
+
+//                                        //        !user_nic.equals("") &&
+                                            //        !user_nic.equals(" ") &&
+                                            //        !user_nic.equals("/n") &&
+
+//                                        //        !user_name.equals("") &&
+                                            //        !user_name.equals(" ") &&
+                                            //        !user_name.equals("/n")) {
+                                            //    if (user_name.length() <= 20) {
+                                            //        if (user_password.length() >= 8) {
+
+                                            //Если email подтвержден
+                                            if (currentUser != null) {
+                                                if (currentUser.isEmailVerified()) {
+                                                    if (toast != null) {
+                                                        toast.cancel();
+                                                    }
+                                                    toast = Toast.makeText(RegistrationActivity.this, "Аккаунт успешно создан", Toast.LENGTH_LONG);
+                                                    toast.show();
+
+                                                    try {
+                                                        //Чтение поля, под которым хранится вся информация БД.
+                                                        BufferedReader br_f = new BufferedReader(new InputStreamReader(openFileInput("file_secret_field")));
+                                                        secret_field = br_f.readLine();
+                                                        br_f.close();
+
+                                                        BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_nic")));
+                                                        user_nic = br_nn.readLine();
+                                                        br_nn.close();
+                                                        BufferedReader br_n = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_name")));
+                                                        user_name = br_n.readLine();
+                                                        br_n.close();
+                                                        BufferedReader br_p = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_password")));
+                                                        user_password = br_p.readLine();
+                                                        br_p.close();
+                                                        BufferedReader br_e = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_email")));
+                                                        user_email = br_e.readLine();
+                                                        br_e.close();
+
+                                                        Log.wtf("all_params", user_nic + user_name + user_password + user_email);
+
+                                                        generateKeys("RSA", 2048, user_password, user_nic);
+
+                                                        //Получение доступа к БД Firebase. Отправка пользовательских данных.
+                                                        NewContact = database.getReference(secret_field + "/Contacts/");
+                                                        NewContact.child(user_nic).setValue(user_name);
+                                                        NameEmail = database.getReference(secret_field + "/NameEmail/");
+                                                        NameEmail.child(user_name).setValue(user_email);
+                                                        User_name = database.getReference(secret_field + "/Users/" + user_nic);
+                                                        User_name.child("name").setValue(user_name);
+                                                        User_nic = database.getReference(secret_field + "/Users/" + user_nic);
+                                                        User_nic.child("nickname").setValue(user_nic);
+                                                        User_email = database.getReference(secret_field + "/Users/" + user_nic);
+                                                        User_email.child("email").setValue(user_email);
+
+                                                        //Запись в файлы пользовательских данных.
+                                                        BufferedWriter bnn = new BufferedWriter(new OutputStreamWriter(
+                                                                openFileOutput(file_nic, MODE_PRIVATE)));
+                                                        bnn.write(user_nic);
+                                                        bnn.close();
+                                                        BufferedWriter bn = new BufferedWriter(new OutputStreamWriter(
+                                                                openFileOutput(file_name + user_nic, MODE_PRIVATE)));
+                                                        bn.write(user_name);
+                                                        bn.close();
+                                                        BufferedWriter bp = new BufferedWriter(new OutputStreamWriter(
+                                                                openFileOutput(file_password + user_nic, MODE_PRIVATE)));
+                                                        bp.write(user_password);
+                                                        bp.close();
+                                                        BufferedWriter be = new BufferedWriter(new OutputStreamWriter(
+                                                                openFileOutput(file_email + user_nic, MODE_PRIVATE)));
+                                                        be.write(user_email);
+                                                        be.close();
+
+                                                        BufferedWriter brnn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_nic", MODE_PRIVATE)));
+                                                        BufferedWriter brn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_name", MODE_PRIVATE)));
+                                                        BufferedWriter brp = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_password", MODE_PRIVATE)));
+                                                        BufferedWriter bre = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_email", MODE_PRIVATE)));
+                                                        brnn.flush();
+                                                        brnn.close();
+                                                        brn.flush();
+                                                        brn.close();
+                                                        brp.flush();
+                                                        brp.close();
+                                                        bre.flush();
+                                                        bre.close();
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    //Переход в основную акивность BottomNavigationActivity
+                                                    Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
+                                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                    intent.putExtra("eT", user_name);
+                                                    startActivity(intent);
+                                                    finish();
+
+                                                } else {
+                                                    if (toast != null) {
+                                                        toast.cancel();
+                                                    }
+                                                    btn_confirm.setText("подтвердить аккаунт");
+                                                    toast = Toast.makeText(getApplicationContext(), "Если вы перешли по ссылке, нажмите повторно", Toast.LENGTH_LONG);
+                                                    toast.show();
+                                                }
+                                            } else {
+                                                registrationClick(btn_confirm);
+                                            }
+                                            //        } else {
+                                            //            Toast.makeText(getApplicationContext(), "Введите пароль подлиннее (минимум 8 символов)", Toast.LENGTH_SHORT).show();
+                                            //        }
+                                            //    } else {
+                                            //        Toast.makeText(getApplicationContext(), "Слишком длинное имя", Toast.LENGTH_SHORT).show();
+                                            //    }
+                                            //} else {
+                                            //    Toast.makeText(getApplicationContext(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
+                                            //}
                                         }
-                                        //        } else {
-                                        //            Toast.makeText(getApplicationContext(), "Введите пароль подлиннее (минимум 8 символов)", Toast.LENGTH_SHORT).show();
-                                        //        }
-                                        //    } else {
-                                        //        Toast.makeText(getApplicationContext(), "Слишком длинное имя", Toast.LENGTH_SHORT).show();
-                                        //    }
-                                        //} else {
-                                        //    Toast.makeText(getApplicationContext(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
-                                        //}
                                     }
-                                }
 
-                                @Override
-                                public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                }
+                                    @Override
+                                    public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                                    }
 
-                                @Override
-                                public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
-                                }
+                                    @Override
+                                    public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
+                                    }
 
-                                @Override
-                                public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
-                                }
+                                    @Override
+                                    public void onChildMoved(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                                    }
 
-                                @Override
-                                public void onCancelled(@NonNull @NotNull DatabaseError error) {
-                                }
-                            });
+                                    @Override
+                                    public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                                    }
+                                });
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
                 }
