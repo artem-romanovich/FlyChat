@@ -93,6 +93,8 @@ public class ImageActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
+                        btn_to_settings.setText("Далее");
+
                         boolean hasForegroundLocationPermission = ContextCompat.checkSelfPermission(getApplicationContext(),
                                 android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
                         boolean hasBackgroundLocationPermission = ContextCompat.checkSelfPermission(getApplicationContext(),

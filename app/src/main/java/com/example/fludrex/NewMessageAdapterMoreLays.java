@@ -89,14 +89,16 @@ public class NewMessageAdapterMoreLays extends ArrayAdapter<MyMessage> {
         if (s.charAt(0) == '|' && s.charAt(1) == 'r' && s.charAt(2) == '|' &&
                 s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'r' && s.charAt(s.length() - 1) == '|'
         ) {
-            viewHolder.text_message.setTextColor(Color.parseColor("#FF1100"));
-            //viewHolder.text_message.setTextSize(50);
+            viewHolder.text_message.setTextColor(Color.parseColor("#EF5350"));
+            viewHolder.text_message.setText(s.substring(3, s.length()-3));
+            viewHolder.text_message.setTextSize(25);
         }
         if (s.charAt(0) == '|' && s.charAt(1) == 'b' && s.charAt(2) == '|' &&
                 s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'b' && s.charAt(s.length() - 1) == '|'
         ) {
             viewHolder.text_message.setTextColor(Color.parseColor("#FF03DAC5"));
-            //viewHolder.text_message.setTextSize(50);
+            viewHolder.text_message.setText(s.substring(3, s.length()-3));
+            viewHolder.text_message.setTextSize(25);
         }
         viewHolder.time_message.setText(message.getTime());
 

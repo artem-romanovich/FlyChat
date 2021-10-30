@@ -3,6 +3,7 @@ package com.example.fludrex;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -24,6 +25,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -41,9 +43,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+
 import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -56,7 +61,9 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+
 import javax.crypto.Cipher;
+
 import static android.content.ContentValues.TAG;
 
 /*
@@ -259,7 +266,7 @@ public class RegistrationActivity extends AppCompatActivity {
         }
     }
 
-    public void registrationClick(View v) {
+    public void registrationClick(View view) throws Exception {
         //Отключаем кнопку
         //btn_get_link.setClickable(false);
 
@@ -275,6 +282,34 @@ public class RegistrationActivity extends AppCompatActivity {
         user_password = replaceRepeat.ReplaceRepeatStr(user_password);
         user_email = replaceRepeat.ReplaceRepeatStr(user_email);
         user_nic = replaceRepeat.ReplaceRepeatStr(user_nic);
+        try {
+            BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_nic")));
+            String tmp = br_nn.readLine();
+            br_nn.close();
+            if (tmp != null && !tmp.equals("")) {
+                btn_confirm.setText("подтвердить аккаунт");
+                to_sign_click.setVisibility(View.GONE);
+
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(btn_view_password.getWindowToken(), 0);
+
+
+                user_nic = tmp;
+                BufferedReader br_n = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_name")));
+                user_name = br_n.readLine();
+                br_n.close();
+                BufferedReader br_p = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_password")));
+                user_password = br_p.readLine();
+                br_p.close();
+                BufferedReader br_e = new BufferedReader(new InputStreamReader(openFileInput("tmp_file_email")));
+                user_email = br_e.readLine();
+                br_e.close();
+                Log.wtf("all_params", user_nic + user_name + user_password + user_email);
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         //Если поле не пустое (в различных конфигурациях)
         if (!user_email.equals("") &&
@@ -300,7 +335,7 @@ public class RegistrationActivity extends AppCompatActivity {
                         if (user_password.length() >= 8) {
 
                             //Появление Snackbar
-                            Snackbar snackbar = Snackbar.make(v, "Убедитесь, что вы сохранили свой пароль", Snackbar.LENGTH_INDEFINITE);
+                            Snackbar snackbar = Snackbar.make(view, "Убедитесь, что вы сохранили свой пароль", Snackbar.LENGTH_INDEFINITE);
                             snackbar.setAction("Я запомнил\nпароль", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
                                 @Override
                                 public void onClick(View v) {
@@ -338,6 +373,22 @@ public class RegistrationActivity extends AppCompatActivity {
                                                 tmp_name.setVisibility(View.VISIBLE);
                                                 tmp_nick.setVisibility(View.VISIBLE);
                                                 tmp_password.setVisibility(View.VISIBLE);
+
+                                                //Появление Snackbar
+                                                Snackbar snackbar = Snackbar.make(view, "Перейдите по отправленной на электронную почту ссылке", Snackbar.LENGTH_INDEFINITE);
+                                                snackbar.setAction("Перейти", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        Intent intent = new Intent(Intent.ACTION_MAIN);
+                                                        intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                        startActivity(intent);
+                                                    }
+                                                });
+                                                snackbar.setTextColor(0XFFFFFFFF);
+                                                snackbar.setBackgroundTint(0XFF31708E);
+                                                snackbar.setActionTextColor(0XFFFFFFFF);
+                                                snackbar.show();
 
                                                 mAuth.createUserWithEmailAndPassword(user_email, user_password)
                                                         .addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<AuthResult>() {
@@ -713,7 +764,11 @@ public class RegistrationActivity extends AppCompatActivity {
                                                     toast.show();
                                                 }
                                             } else {
-                                                registrationClick(btn_confirm);
+                                                try {
+                                                    registrationClick(btn_confirm);
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
                                             }
                                             //        } else {
                                             //            Toast.makeText(getApplicationContext(), "Введите пароль подлиннее (минимум 8 символов)", Toast.LENGTH_SHORT).show();

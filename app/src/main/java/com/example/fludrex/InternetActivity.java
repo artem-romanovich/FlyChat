@@ -7,6 +7,7 @@ package com.example.fludrex;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -134,6 +135,8 @@ public class InternetActivity extends AppCompatActivity {
         try {
             BufferedReader br_f = new BufferedReader(new InputStreamReader(openFileInput("file_secret_field")));
             String secret_field = br_f.readLine();
+
+            startService(secret_field);
 
             BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("file_nic")));
             my_nic = br_nn.readLine();
@@ -872,5 +875,14 @@ public class InternetActivity extends AppCompatActivity {
 
         //Возвращаем ключ сразу в формате "PrivateKey"
         return privatekey;
+    }
+
+    public void startService(String secret_field) {
+        Intent serviceIntent = new Intent(this, MessageListeningService.class);
+        ContextCompat.startForegroundService(this, serviceIntent);
+    }
+    public void stopService() {
+        Intent serviceIntent = new Intent(this, MessageListeningService.class);
+        startService(serviceIntent);
     }
 }

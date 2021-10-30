@@ -122,7 +122,7 @@ public class SignIn extends AppCompatActivity {
                                     bw.close();
                                 } catch (IOException e) {
                                     sign_btn.setClickable(true);
-                                    Toast.makeText(SignIn.this, "Данные повреждены", Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(SignIn.this, "Данные повреждены", Toast.LENGTH_SHORT).show();
                                     e.printStackTrace();
                                 }
                                 //Пробуем получить приватный ключ из памяти физустройства по id чата

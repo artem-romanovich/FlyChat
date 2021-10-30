@@ -2,6 +2,7 @@ package com.example.fludrex;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 
@@ -260,7 +261,6 @@ public class MessageListeningService extends Service {
             };
             connectedRef.addValueEventListener(connectedEventListener);
 
-
             NOTIFICATION = database.getReference(secret_field + "/Notifications/" + my_nic);
             InternetActivity.listener_status = 0;
             childEventListener = new ChildEventListener() {
@@ -289,6 +289,7 @@ public class MessageListeningService extends Service {
 
                                 String get_time_To_look = get_time.substring(8, 10) + "." + get_time.substring(10, 12) + "\n" +
                                         get_time.substring(6, 8) + "." + get_time.substring(4, 6) + "." + get_time.substring(0, 4);
+
 
                                 DatabaseReference NotifRemove = FirebaseDatabase.getInstance().getReference(secret_field + "/Notifications/" + my_nic);
                                 ValueEventListener remove_Notif_listener = new ValueEventListener() {
@@ -416,6 +417,7 @@ public class MessageListeningService extends Service {
                                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                                     notificationManager.notify(counter, notification);
                                     counter += d;
+
                                 } else {
                                     NOTIFICATION.removeEventListener(childEventListener);
                                     oncreate(context);

@@ -39,7 +39,6 @@ import java.util.Objects;
 public class BottomNavigationActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
-    DatabaseReference NOTIFICATION;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,12 +88,6 @@ public class BottomNavigationActivity extends AppCompatActivity {
             String secret_field = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOc9PSHdGyL+SwYokr1xBo48GuBjaKLHQlvCA7PTY6WMllh9IJ31DbtJ08ATDwW+q0Pk7wM80d5kF1lUMXsUNkCAwEAAQ";
             bs.write(secret_field);
             bs.close();
-            BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("file_nic")));
-            String my_nic = br_nn.readLine();
-
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            NOTIFICATION = database.getReference(secret_field + "/Notifications/" + my_nic);
-            //NOTIFICATION.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
 
             startService(secret_field);
 
