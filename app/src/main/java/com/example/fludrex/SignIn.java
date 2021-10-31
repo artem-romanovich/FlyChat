@@ -143,7 +143,7 @@ public class SignIn extends AppCompatActivity {
                                     get_password[0] = new String(utf8, StandardCharsets.UTF_8);
                                 } catch (Exception e) {
                                     sign_btn.setClickable(true);
-                                    Toast.makeText(SignIn.this, "Данные повреждены", Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(SignIn.this, "Данные повреждены", Toast.LENGTH_SHORT).show();
                                     e.printStackTrace();
                                 }
 

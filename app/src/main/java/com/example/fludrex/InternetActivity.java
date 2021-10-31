@@ -299,6 +299,52 @@ public class InternetActivity extends AppCompatActivity {
             //Получение доступа к БД Firebase. Установка разных путей.
             NOTIFICATION = database.getReference(secret_field + "/Notifications/" + interlocutor_nic);
 
+            final DatabaseReference key_public_Ref = database.getReference(secret_field + "/Internet_Messages/" + chatId + "/" + interlocutor_nic + "_key_public");
+            key_public_Ref.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NotNull DataSnapshot dataSnapshot11) {
+                    if (!dataSnapshot11.exists()) { //Если публичного ключа собеседника в базе данных нет. Это свидетельствует о том, что он нас в список контактов еще не добавил.
+                        if (!chatId.equals("Chat_" + my_nic + "_" + my_nic)) {
+
+                            //При попытке отправки текста появляется кнопка "Начать общение" (Точнее говоря, на все той же кнопке меняется текст).
+                            get_message.setVisibility(View.GONE);
+
+                            //Отключение клавиатуры
+                            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(get_message.getWindowToken(), 0);
+
+                            //Появление Snackbar, предложение запроса.
+                            Snackbar snackbar = Snackbar.make(get_message, "Пользователь еще не добавил вас в список контактов", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Запрос", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                @Override
+                                public void onClick(View v) {
+
+                                    //Получение доступа к БД Firebase. Отправка запроса пользователю на добавление в список контактов.
+                                    REQUEST = database.getReference(secret_field + "/Request/" + interlocutor_nic);
+                                    InternetActivity.this.REQUEST.push().setValue(my_nic);
+
+                                    //Toast.makeText(getApplicationContext(), interlocutor_name + " получит ваше приглашение", Toast.LENGTH_SHORT).show();
+                                    btn_edit_message.setVisibility(View.GONE);
+                                    get_message.setFocusable(false);
+
+                                    Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
+                                    startActivity(intent);
+                                }
+                            });
+                            snackbar.setTextColor(0XFFFFFFFF);
+                            snackbar.setBackgroundTint(0XFF31708E);
+                            snackbar.setActionTextColor(0XFFFFFFFF);
+                            snackbar.show();
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+                }
+            });
+
             //Загружаем сообщения
             messages = new ArrayList<MyMessage>();
             //MESSAGES = new ArrayList<>();
@@ -881,6 +927,7 @@ public class InternetActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, MessageListeningService.class);
         ContextCompat.startForegroundService(this, serviceIntent);
     }
+
     public void stopService() {
         Intent serviceIntent = new Intent(this, MessageListeningService.class);
         startService(serviceIntent);

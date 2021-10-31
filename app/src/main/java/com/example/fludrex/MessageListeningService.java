@@ -418,6 +418,13 @@ public class MessageListeningService extends Service {
                                     notificationManager.notify(counter, notification);
                                     counter += d;
 
+                                    if (!tmp_nck.equals(my_nic)) {
+                                        NOTIFICATION.removeEventListener(childEventListener);
+                                        if (InternetActivity.INTERLOCUTOR != null && InternetActivity.childEventListener1 != null) {
+                                            InternetActivity.INTERLOCUTOR.removeEventListener(InternetActivity.childEventListener1);
+                                        }
+                                        oncreate(context);
+                                    }
                                 } else {
                                     NOTIFICATION.removeEventListener(childEventListener);
                                     oncreate(context);

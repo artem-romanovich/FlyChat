@@ -14,8 +14,8 @@ android {
         applicationId "com.example.fludrex"
         minSdkVersion 26
         targetSdkVersion 30
-        versionCode 3
-        versionName "1.4.2"
+        versionCode 31102021
+        versionName "1.4.3"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

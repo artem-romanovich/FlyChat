@@ -194,6 +194,49 @@ public class RegistrationActivity extends AppCompatActivity {
                 tmp_name.setVisibility(View.VISIBLE);
                 tmp_nick.setVisibility(View.VISIBLE);
                 tmp_password.setVisibility(View.VISIBLE);
+
+                btn_cancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder alert = new AlertDialog.Builder(RegistrationActivity.this);
+                        alert.setTitle("Вы уверены?");
+                        alert.setMessage("Вы точно хотите прервать создание вашего аккаунта? Вы сможете заново создать его в будущем");
+                        alert.setPositiveButton("Да", new DialogInterface.OnClickListener() { //Принятие приглашения
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                try {
+                                    BufferedWriter brnn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_nic", MODE_PRIVATE)));
+                                    brnn.flush();
+                                    brnn.close();
+                                    BufferedWriter brn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_name", MODE_PRIVATE)));
+                                    brn.flush();
+                                    brn.close();
+                                    BufferedWriter brp = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_password", MODE_PRIVATE)));
+                                    brp.flush();
+                                    brp.close();
+                                    BufferedWriter bre = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_email", MODE_PRIVATE)));
+                                    bre.flush();
+                                    bre.close();
+                                    Log.wtf("all_params", user_nic + user_name + user_password + user_email);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        });
+                        alert.setNegativeButton("Нет", new DialogInterface.OnClickListener() { //Отказ
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        alert.show();
+                    }
+                });
             }
 
         } catch (Exception e) {
@@ -345,185 +388,182 @@ public class RegistrationActivity extends AppCompatActivity {
                                         @Override
                                         public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
                                             if (!snapshot.exists()) {
-
-                                                info_title.setText("Перейдите по ссылке, отправленной на вашу электронную почту");
-                                                info_title.setTextColor(Color.parseColor("#FF2819"));
-
-                                                red1.setTextColor(Color.parseColor("#FF000000"));
-                                                red2.setTextColor(Color.parseColor("#FF000000"));
-
-                                                btn_confirm.setText("подтвердить аккаунт");
-                                                to_sign_click.setVisibility(View.GONE);
-
-                                                btn_cancel.setVisibility(View.VISIBLE);
-
-                                                tmp_email.setText(user_email);
-                                                tmp_name.setText(user_name);
-                                                tmp_nick.setText(user_nic);
-                                                char[] chars = new char[user_password.length()];
-                                                Arrays.fill(chars, '*');
-                                                tmp_password.setText(new String(chars));
-
-                                                set_email.setVisibility(View.GONE);
-                                                set_name.setVisibility(View.GONE);
-                                                set_nic.setVisibility(View.GONE);
-                                                set_password.setVisibility(View.GONE);
-                                                btn_view_password.setVisibility(View.GONE);
-                                                tmp_email.setVisibility(View.VISIBLE);
-                                                tmp_name.setVisibility(View.VISIBLE);
-                                                tmp_nick.setVisibility(View.VISIBLE);
-                                                tmp_password.setVisibility(View.VISIBLE);
-
-                                                //Появление Snackbar
-                                                Snackbar snackbar = Snackbar.make(view, "Перейдите по отправленной на электронную почту ссылке", Snackbar.LENGTH_INDEFINITE);
-                                                snackbar.setAction("Перейти", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                                DatabaseReference IsThisName = FirebaseDatabase.getInstance().getReference(secret_field + "/NameEmail/" + user_name);
+                                                IsThisName.addListenerForSingleValueEvent(new ValueEventListener() {
                                                     @Override
-                                                    public void onClick(View v) {
-                                                        Intent intent = new Intent(Intent.ACTION_MAIN);
-                                                        intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                        startActivity(intent);
-                                                    }
-                                                });
-                                                snackbar.setTextColor(0XFFFFFFFF);
-                                                snackbar.setBackgroundTint(0XFF31708E);
-                                                snackbar.setActionTextColor(0XFFFFFFFF);
-                                                snackbar.show();
+                                                    public void onDataChange(@NonNull @NotNull DataSnapshot snapshot33) {
+                                                        if (!snapshot33.exists()) {
 
-                                                mAuth.createUserWithEmailAndPassword(user_email, user_password)
-                                                        .addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<AuthResult>() {
-                                                            @Override
-                                                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                                                if (task.isSuccessful()) {
+                                                            info_title.setText("Перейдите по ссылке, отправленной на вашу электронную почту");
+                                                            info_title.setTextColor(Color.parseColor("#FF2819"));
 
-                                                                    currentUser = mAuth.getCurrentUser();
-                                                                    //Запись в файлы пользовательских данных.
-                                                                    try {
-                                                                        BufferedWriter bnn = new BufferedWriter(new OutputStreamWriter(
-                                                                                openFileOutput("tmp_file_nic", MODE_PRIVATE)));
-                                                                        bnn.write(user_nic);
-                                                                        bnn.close();
+                                                            red1.setTextColor(Color.parseColor("#FF000000"));
+                                                            red2.setTextColor(Color.parseColor("#FF000000"));
 
-                                                                        BufferedWriter bn = new BufferedWriter(new OutputStreamWriter(
-                                                                                openFileOutput("tmp_file_name", MODE_PRIVATE)));
-                                                                        bn.write(user_name);
-                                                                        bn.close();
+                                                            btn_confirm.setText("подтвердить аккаунт");
+                                                            to_sign_click.setVisibility(View.GONE);
 
-                                                                        BufferedWriter bp = new BufferedWriter(new OutputStreamWriter(
-                                                                                openFileOutput("tmp_file_password", MODE_PRIVATE)));
-                                                                        bp.write(user_password);
-                                                                        bp.close();
+                                                            btn_cancel.setVisibility(View.VISIBLE);
 
-                                                                        BufferedWriter be = new BufferedWriter(new OutputStreamWriter(
-                                                                                openFileOutput("tmp_file_email", MODE_PRIVATE)));
-                                                                        be.write(user_email);
-                                                                        be.close();
-                                                                        Log.wtf("all_params", user_nic + user_name + user_password + user_email);
-                                                                    } catch (IOException e) {
-                                                                        e.printStackTrace();
-                                                                    }
+                                                            tmp_email.setText(user_email);
+                                                            tmp_name.setText(user_name);
+                                                            tmp_nick.setText(user_nic);
+                                                            char[] chars = new char[user_password.length()];
+                                                            Arrays.fill(chars, '*');
+                                                            tmp_password.setText(new String(chars));
 
-                                                                    ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
-                                                                            .setUrl("https://www.example.com/?email=" + user_email)
-                                                                            .setHandleCodeInApp(true)
-                                                                            .setAndroidPackageName("com.example.fludrex", false, null)
-                                                                            .build();
+                                                            set_email.setVisibility(View.GONE);
+                                                            set_name.setVisibility(View.GONE);
+                                                            set_nic.setVisibility(View.GONE);
+                                                            set_password.setVisibility(View.GONE);
+                                                            btn_view_password.setVisibility(View.GONE);
+                                                            tmp_email.setVisibility(View.VISIBLE);
+                                                            tmp_name.setVisibility(View.VISIBLE);
+                                                            tmp_nick.setVisibility(View.VISIBLE);
+                                                            tmp_password.setVisibility(View.VISIBLE);
 
-                                                                    ActionCodeSettings actioncodesettings = ActionCodeSettings.newBuilder()
-                                                                            //.setUrl(url)
-                                                                            //.setIOSBundleId("com.example.ios")
-                                                                            //.setHandleCodeInApp(true)
-                                                                            //.setAndroidPackageName("com.example.android", false, null)
-                                                                            //.build();
+                                                            //Появление Snackbar
+                                                            Snackbar snackbar = Snackbar.make(view, "Перейдите по отправленной на электронную почту ссылке", Snackbar.LENGTH_INDEFINITE);
+                                                            snackbar.setAction("Перейти", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                                                @Override
+                                                                public void onClick(View v) {
+                                                                    Intent intent = new Intent(Intent.ACTION_MAIN);
+                                                                    intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                                                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                                    startActivity(intent);
+                                                                }
+                                                            });
+                                                            snackbar.setTextColor(0XFFFFFFFF);
+                                                            snackbar.setBackgroundTint(0XFF31708E);
+                                                            snackbar.setActionTextColor(0XFFFFFFFF);
+                                                            snackbar.show();
 
-                                                                            .setUrl("http://www.example.com/verify?uid=" + user_email)
-                                                                            .setHandleCodeInApp(true)
-                                                                            .setAndroidPackageName(Objects.requireNonNull(actionCodeSettings.getAndroidPackageName()),
-                                                                                    actionCodeSettings.getAndroidInstallApp(),
-                                                                                    actionCodeSettings.getAndroidMinimumVersion())
-                                                                            .setIOSBundleId("com.example.ios")
-                                                                            .build();
-
-                                                                    if (currentUser != null) {
-                                                                        currentUser.sendEmailVerification().addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<Void>() {
-                                                                            @Override
-                                                                            public void onComplete(@NonNull Task<Void> task) {
-                                                                            }
-                                                                        });
-                                                                    }
-
-                                                                    btn_cancel.setOnClickListener(new View.OnClickListener() {
+                                                            mAuth.createUserWithEmailAndPassword(user_email, user_password)
+                                                                    .addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<AuthResult>() {
                                                                         @Override
-                                                                        public void onClick(View v) {
-                                                                            AlertDialog.Builder alert = new AlertDialog.Builder(RegistrationActivity.this);
-                                                                            alert.setTitle("Вы уверены?");
-                                                                            alert.setMessage("Вы точно хотите прервать создание вашего аккаунта? Вы сможете заново создать его в будущем");
-                                                                            alert.setPositiveButton("Да", new DialogInterface.OnClickListener() { //Принятие приглашения
-                                                                                @Override
-                                                                                public void onClick(DialogInterface dialog, int which) {
+                                                                        public void onComplete(@NonNull Task<AuthResult> task) {
+                                                                            if (task.isSuccessful()) {
 
-                                                                                    AuthCredential credential = EmailAuthProvider.getCredential(user_email, user_password);
+                                                                                currentUser = mAuth.getCurrentUser();
+                                                                                //Запись в файлы пользовательских данных.
+                                                                                try {
+                                                                                    BufferedWriter bnn = new BufferedWriter(new OutputStreamWriter(
+                                                                                            openFileOutput("tmp_file_nic", MODE_PRIVATE)));
+                                                                                    bnn.write(user_nic);
+                                                                                    bnn.close();
 
-                                                                                    currentUser.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                                    BufferedWriter bn = new BufferedWriter(new OutputStreamWriter(
+                                                                                            openFileOutput("tmp_file_name", MODE_PRIVATE)));
+                                                                                    bn.write(user_name);
+                                                                                    bn.close();
+
+                                                                                    BufferedWriter bp = new BufferedWriter(new OutputStreamWriter(
+                                                                                            openFileOutput("tmp_file_password", MODE_PRIVATE)));
+                                                                                    bp.write(user_password);
+                                                                                    bp.close();
+
+                                                                                    BufferedWriter be = new BufferedWriter(new OutputStreamWriter(
+                                                                                            openFileOutput("tmp_file_email", MODE_PRIVATE)));
+                                                                                    be.write(user_email);
+                                                                                    be.close();
+                                                                                    Log.wtf("all_params", user_nic + user_name + user_password + user_email);
+                                                                                } catch (IOException e) {
+                                                                                    e.printStackTrace();
+                                                                                }
+
+                                                                                ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
+                                                                                        .setUrl("https://www.example.com/?email=" + user_email)
+                                                                                        .setHandleCodeInApp(true)
+                                                                                        .setAndroidPackageName("com.example.fludrex", false, null)
+                                                                                        .build();
+
+                                                                                ActionCodeSettings actioncodesettings = ActionCodeSettings.newBuilder()
+                                                                                        //.setUrl(url)
+                                                                                        //.setIOSBundleId("com.example.ios")
+                                                                                        //.setHandleCodeInApp(true)
+                                                                                        //.setAndroidPackageName("com.example.android", false, null)
+                                                                                        //.build();
+
+                                                                                        .setUrl("http://www.example.com/verify?uid=" + user_email)
+                                                                                        .setHandleCodeInApp(true)
+                                                                                        .setAndroidPackageName(Objects.requireNonNull(actionCodeSettings.getAndroidPackageName()),
+                                                                                                actionCodeSettings.getAndroidInstallApp(),
+                                                                                                actionCodeSettings.getAndroidMinimumVersion())
+                                                                                        .setIOSBundleId("com.example.ios")
+                                                                                        .build();
+
+                                                                                if (currentUser != null) {
+                                                                                    currentUser.sendEmailVerification().addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<Void>() {
                                                                                         @Override
                                                                                         public void onComplete(@NonNull Task<Void> task) {
-                                                                                            if (task.isSuccessful()) {
-                                                                                                currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                                                                    @Override
-                                                                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                                                                        if (task.isSuccessful()) {
-                                                                                                            Log.d(TAG, "User account deleted.");
-
-                                                                                                            try {
-                                                                                                                BufferedWriter brnn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_nic", MODE_PRIVATE)));
-                                                                                                                brnn.flush();
-                                                                                                                brnn.close();
-                                                                                                                BufferedWriter brn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_name", MODE_PRIVATE)));
-                                                                                                                brn.flush();
-                                                                                                                brn.close();
-                                                                                                                BufferedWriter brp = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_password", MODE_PRIVATE)));
-                                                                                                                brp.flush();
-                                                                                                                brp.close();
-                                                                                                                BufferedWriter bre = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_email", MODE_PRIVATE)));
-                                                                                                                bre.flush();
-                                                                                                                bre.close();
-                                                                                                                Log.wtf("all_params", user_nic + user_name + user_password + user_email);
-                                                                                                            } catch (Exception e) {
-                                                                                                                e.printStackTrace();
-                                                                                                            }
-
-                                                                                                            Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                                                                                                            startActivity(intent);
-                                                                                                            finish();
-                                                                                                        }
-                                                                                                    }
-                                                                                                });
-                                                                                            }
                                                                                         }
                                                                                     });
                                                                                 }
-                                                                            });
-                                                                            alert.setNegativeButton("Нет", new DialogInterface.OnClickListener() { //Отказ
-                                                                                @Override
-                                                                                public void onClick(DialogInterface dialog, int which) {
-                                                                                    dialog.dismiss();
-                                                                                }
-                                                                            });
-                                                                            alert.show();
+
+                                                                                btn_cancel.setOnClickListener(new View.OnClickListener() {
+                                                                                    @Override
+                                                                                    public void onClick(View v) {
+                                                                                        AlertDialog.Builder alert = new AlertDialog.Builder(RegistrationActivity.this);
+                                                                                        alert.setTitle("Вы уверены?");
+                                                                                        alert.setMessage("Вы точно хотите прервать создание вашего аккаунта? Вы сможете заново создать его в будущем");
+                                                                                        alert.setPositiveButton("Да", new DialogInterface.OnClickListener() { //Принятие приглашения
+                                                                                            @Override
+                                                                                            public void onClick(DialogInterface dialog, int which) {
+
+                                                                                                try {
+                                                                                                    BufferedWriter brnn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_nic", MODE_PRIVATE)));
+                                                                                                    brnn.flush();
+                                                                                                    brnn.close();
+                                                                                                    BufferedWriter brn = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_name", MODE_PRIVATE)));
+                                                                                                    brn.flush();
+                                                                                                    brn.close();
+                                                                                                    BufferedWriter brp = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_password", MODE_PRIVATE)));
+                                                                                                    brp.flush();
+                                                                                                    brp.close();
+                                                                                                    BufferedWriter bre = new BufferedWriter(new OutputStreamWriter(openFileOutput("tmp_file_email", MODE_PRIVATE)));
+                                                                                                    bre.flush();
+                                                                                                    bre.close();
+                                                                                                    Log.wtf("all_params", user_nic + user_name + user_password + user_email);
+                                                                                                } catch (Exception e) {
+                                                                                                    e.printStackTrace();
+                                                                                                }
+
+                                                                                                Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
+                                                                                                startActivity(intent);
+                                                                                                finish();
+                                                                                            }
+                                                                                        });
+                                                                                        alert.setNegativeButton("Нет", new DialogInterface.OnClickListener() { //Отказ
+                                                                                            @Override
+                                                                                            public void onClick(DialogInterface dialog, int which) {
+                                                                                                dialog.dismiss();
+                                                                                            }
+                                                                                        });
+                                                                                        alert.show();
+                                                                                    }
+                                                                                });
+
+                                                                                //Отображение кнопки для подтверждении адреса эл. почты
+                                                                                //to_sign_click.setVisibility(View.GONE);
+                                                                                //btn_confirm.setVisibility(View.VISIBLE);
+
+                                                                            } else {
+                                                                                Toast.makeText(RegistrationActivity.this,
+                                                                                        "Регистрация оборвалась. Попробуйте выбрать другой адрес электроной почты", Toast.LENGTH_SHORT).show();
+                                                                            }
                                                                         }
                                                                     });
+                                                            //v.setVisibility(View.GONE);
+                                                        } else {
+                                                            Toast.makeText(RegistrationActivity.this, "Пользователь с таким именем уже существует", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    }
 
-                                                                    //Отображение кнопки для подтверждении адреса эл. почты
-                                                                    //to_sign_click.setVisibility(View.GONE);
-                                                                    //btn_confirm.setVisibility(View.VISIBLE);
+                                                    @Override
+                                                    public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                                                    }
+                                                });
 
-                                                                } else {
-                                                                    Toast.makeText(RegistrationActivity.this,
-                                                                            "Регистрация оборвалась. Попробуйте еще раз", Toast.LENGTH_SHORT).show();
-                                                                }
-                                                            }
-                                                        });
-                                                //v.setVisibility(View.GONE);
                                             } else {
                                                 Toast.makeText(RegistrationActivity.this, "Пользователь с таким никнеймом уже существует", Toast.LENGTH_SHORT).show();
                                             }
