@@ -5,23 +5,33 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Objects;
+
+import static android.content.ContentValues.TAG;
 
 /*
     Ранее активность представляла собой загрузочный экран с логотипом.
@@ -93,7 +103,12 @@ public class ImageActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        btn_to_settings.setText("Продолжить");
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            public void run() {
+                                btn_to_settings.setText("Продолжить");
+                            }
+                        }, 2000);
 
                         boolean hasForegroundLocationPermission = ContextCompat.checkSelfPermission(getApplicationContext(),
                                 android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;

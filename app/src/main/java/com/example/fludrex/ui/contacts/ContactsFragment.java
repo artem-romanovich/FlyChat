@@ -82,6 +82,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -104,7 +105,7 @@ public class ContactsFragment extends Fragment {
 
     EditText find_username1;
     Button btn_find_user1;
-    LinearLayout linlay_bar, linlay_list, linlay_btn;
+    LinearLayout linlay_bar, linlay_list, linlay_btn, linallusers;
     ListView listView;
 
     public String user_nic;
@@ -159,6 +160,7 @@ public class ContactsFragment extends Fragment {
         linlay_list = rootView.findViewById(R.id.linlay_list);
         mySwipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
         listView = rootView.findViewById(R.id.contacts_listview1);
+        linallusers = rootView.findViewById(R.id.linallusers);
 
         btn_find_user1.setBackgroundResource(R.drawable.btn_selector);
 
@@ -167,6 +169,7 @@ public class ContactsFragment extends Fragment {
         //отображается разметка с circular progress bar. Впоследствии отображается главный экран.
         linlay_bar.setVisibility(View.VISIBLE);
         linlay_list.setVisibility(View.GONE);
+        linallusers.setVisibility(View.GONE);
         linlay_btn.setVisibility(View.GONE);
 
         if (hasConnection(requireActivity())) {
@@ -228,20 +231,14 @@ public class ContactsFragment extends Fragment {
 
                                 //Если на сервере техн. режим, пользователю запрещается доступ к приложению
                                 if (status.equals("NO")) {
-                                    Toast.makeText(requireActivity(),
-                                            "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
-                                    Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
-                                    startActivity(intent);
-                                    requireActivity().finish();
-                                } else {
+                                    final boolean[] pass = new boolean[1];
+
                                     DatabaseReference CheckAcc = FirebaseDatabase.getInstance().getReference(secret_field + "/Status/Capable/Acc/");
                                     ValueEventListener acc_listener = new ValueEventListener() {
                                         @Override
                                         public void onDataChange(DataSnapshot dataSnapshotacc) {
-                                            Log.wtf("e", dataSnapshotacc.getValue(String.class));
-                                            Log.wtf("e", my_nic);
                                             if (dataSnapshotacc.getValue(String.class).equals(my_nic)) {
-                                                start(my_nic, map, rootView);
+                                                pass[0] = true;
                                             }
                                         }
 
@@ -252,6 +249,21 @@ public class ContactsFragment extends Fragment {
                                     CheckAcc.child("acc1").addListenerForSingleValueEvent(acc_listener);
                                     CheckAcc.child("acc2").addListenerForSingleValueEvent(acc_listener);
                                     CheckAcc.child("acc3").addListenerForSingleValueEvent(acc_listener);
+
+                                    Handler handler = new Handler();
+                                    handler.postDelayed(new Runnable() {
+                                        public void run() {
+                                            if (pass[0]) {
+                                                start(my_nic, map, rootView);
+                                            } else {
+                                                Toast.makeText(requireActivity(),
+                                                        "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
+                                                Intent intent = new Intent(requireActivity(), BottomNavigationActivity.class);
+                                                startActivity(intent);
+                                                requireActivity().finish();
+                                            }
+                                        }
+                                    }, 3000);
                                 }
                                 if (status.equals("YES")) {
 
@@ -355,7 +367,7 @@ public class ContactsFragment extends Fragment {
         }
 
         String interlocutor_nic = "67889";
-
+//?????????????????????????????????
         //В памяти хранится все сообщения. Нас же интересуют только те, что относятся к данному чату.
         //Блок кода подгружает только те сообщения, которые нужны.
         List<MyMessage> help_array_messages = new ArrayList<MyMessage>(map.values());
@@ -374,7 +386,7 @@ public class ContactsFragment extends Fragment {
                 messages.add(help_array_messages.get(i));
             }
         }
-
+//?????????????????????????????????
         if (keys_after.size() != 0) {
             MyMessage a = map.get(keys_after.get(keys_after.size() - 1));
             if (a != null) {
@@ -425,7 +437,6 @@ public class ContactsFragment extends Fragment {
                                 alert.setMessage("Пользователь " + new_user_name + " (под ником " + new_user_nic + ") " +
                                         "желает добавить вас в свой список контактов. Принять запрос?");
                                 alert.setPositiveButton("Принять", new DialogInterface.OnClickListener() { //Принятие приглашения
-                                    @RequiresApi(api = Build.VERSION_CODES.O)
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
 
@@ -497,6 +508,13 @@ public class ContactsFragment extends Fragment {
 
         //Установление слушателя событий нажатия кнопки "Искать"
         NewContactsAdapter finalAdapter = adapter;
+        btn_find_user1.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                linallusers.setVisibility(View.VISIBLE);
+                return false;
+            }
+        });
         btn_find_user1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

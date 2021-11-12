@@ -1,8 +1,10 @@
 package com.example.fludrex;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
@@ -10,6 +12,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -39,6 +42,7 @@ import java.util.Objects;
 public class BottomNavigationActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
+    Toast toast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,5 +141,13 @@ public class BottomNavigationActivity extends AppCompatActivity {
     public void stopService() {
         Intent serviceIntent = new Intent(this, MessageListeningService.class);
         startService(serviceIntent);
+    }
+
+    public void allusers(View view) {
+        if (toast != null) {
+            toast.cancel();
+        }
+        toast = Toast.makeText(getApplicationContext(), "Будет доступно позже", Toast.LENGTH_SHORT);
+        toast.show();
     }
 }

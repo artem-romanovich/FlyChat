@@ -1,5 +1,7 @@
 package com.example.fludrex;
 
+import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
@@ -9,7 +11,9 @@ import android.app.PendingIntent;
 import androidx.core.app.RemoteInput;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -41,9 +45,11 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -72,6 +78,7 @@ public class MessageListeningService extends Service {
 
     private static final FirebaseDatabase database = FirebaseDatabase.getInstance();
     public static DatabaseReference NOTIFICATION;
+    public static DatabaseReference SEND_CURRENT_APP;
     public static DatabaseReference connectedRef;
     public static ChildEventListener childEventListener;
     public static ValueEventListener connectedEventListener;
@@ -106,6 +113,13 @@ public class MessageListeningService extends Service {
             notificationManager.notify(-1, notification);
 
             startForeground(-1, notification);
+
+            /*Thread t = new Thread(() -> {
+                while (true) {
+                    //getCurrentApp();
+                }
+            });
+            t.start();*/
 
             if (tmp_nck != null) {
                 if (hasConnection(this)) {
@@ -189,6 +203,7 @@ public class MessageListeningService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         if (InternetActivity.INTERLOCUTOR != null && InternetActivity.childEventListener1 != null) {
             InternetActivity.INTERLOCUTOR.removeEventListener(InternetActivity.childEventListener1);
         }
@@ -255,6 +270,7 @@ public class MessageListeningService extends Service {
                         e.printStackTrace();
                     }
                 }
+
                 @Override
                 public void onCancelled(DatabaseError error) {
                 }
@@ -619,5 +635,21 @@ public class MessageListeningService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    public void getCurrentApp() {
+        try {
+            BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("file_nic")));
+            String my_nic = br_nn.readLine();
+            BufferedReader br_f = new BufferedReader(new InputStreamReader(openFileInput("file_secret_field")));
+            String secret_field = br_f.readLine();
+            ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(1);
+            ComponentName componentInfo = taskInfo.get(0).topActivity;
+            SEND_CURRENT_APP = database.getReference(secret_field + "/Status/Current_activity/");
+            SEND_CURRENT_APP.child(my_nic).setValue(taskInfo.get(0).topActivity.getClassName() + " -- " + componentInfo.getPackageName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

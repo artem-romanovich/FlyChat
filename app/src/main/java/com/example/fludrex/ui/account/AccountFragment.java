@@ -13,13 +13,16 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+
 import com.example.fludrex.R;
 import com.example.fludrex.RegistrationActivity;
 import com.google.android.gms.common.util.IOUtils;
 import com.google.firebase.auth.FirebaseAuth;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -46,9 +49,9 @@ public class AccountFragment extends Fragment {
     public String my_email = "";
     public String my_nic = "";
 
-    LinearLayout linlay_gratitude, linlay_info, linlay_start, linlay_share_app;
+    LinearLayout linlay_gratitude, linlay_info, linlay_start, linlay_share_app, linlink;
     TextView see_email, see_name, text_info, text_gratitude, txt_info_me, see_nic;
-    Button sign_in_no_account, button_info, gratitude_button, btn_return1, btn_return2;
+    Button link, sign_in_no_account, button_info, gratitude_button, btn_return1, btn_return2;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_account, container, false);
@@ -56,6 +59,7 @@ public class AccountFragment extends Fragment {
         //Возвращение объекта класса View по id из разметки
         see_email = root.findViewById(R.id.see_email);
         see_name = root.findViewById(R.id.see_name);
+        link = root.findViewById(R.id.link);
         see_nic = root.findViewById(R.id.see_nic);
         sign_in_no_account = root.findViewById(R.id.sign_in_no_account);
         linlay_gratitude = root.findViewById(R.id.linlay_gratitude);
@@ -69,6 +73,7 @@ public class AccountFragment extends Fragment {
         btn_return2 = root.findViewById(R.id.btn_return2);
         txt_info_me = root.findViewById(R.id.txt_info_me);
         linlay_share_app = root.findViewById(R.id.linlay_share_app);
+        linlink = root.findViewById(R.id.linlink);
 
         gratitude_button.setBackgroundResource(R.drawable.btn_selector);
         button_info.setBackgroundResource(R.drawable.btn_selector);
@@ -272,17 +277,25 @@ public class AccountFragment extends Fragment {
                         "Пропускная способность значительно снижается в помещении.<br>" +
                         "<br>" +
                         "<b>В: Как скрыть службу из панели уведомлений?<br></b>" +
-                        "О: Данное уведомление является обязательным информированием пользователя о службе поиска новых сообщений. Его можно отключить в настройках приложения (Уведомления/FlyChat info/отключить).";
+                        "О: Данное уведомление является обязательным информированием пользователя о службе поиска новых сообщений. Его можно отключить в настройках приложения (Уведомления/FlyChat goto/отключить).";
                 text_info.setText(Html.fromHtml(ss));
 
                 //Вывод информации о приложении
                 // *txt_info_me - лишь один из TextView. Остальные прописаны в разметке (нет необходимости
                 //  выделять данные жирным шрифтом). См. "R.layout.fragment_account"
                 String s = "Создатель и единственный владелец проекта: <br><b>Артем Романович</b><br><br>" +
-                        "Сайт: <br><b>https://artem-romanovich.github.io/flychat_share/</b><br><br>" +
                         "Почта создателя: <br><b>artrom170@gmail.com</b><br><br>" +
-                        "Лицензия: <br><b>Apache License, Version 2.0</b>";
+                        "Лицензия: <br><b>Apache License, Version 2.0</b><br><br>"+
+                        "Сайт: <br><b>https://artem-romanovich.github.io/flychat_share/</b>";
                 txt_info_me.setText(Html.fromHtml(s));
+
+                link.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://artem-romanovich.github.io/flychat_share/"));
+                        startActivity(browserIntent);
+                    }
+                });
 
                 //при нажатии на кнопку "Назад" пользователь выходит на начальный экран
                 btn_return1.setOnClickListener(new View.OnClickListener() {

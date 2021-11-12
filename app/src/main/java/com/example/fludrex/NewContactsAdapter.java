@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -117,6 +118,11 @@ public class NewContactsAdapter extends ArrayAdapter<MyContacts> {
             }
         });
         return convertView;
+    }
+
+    public ListAdapter sortData() {
+        Collections.sort(CONTACTS);
+        return this;
     }
 
     private class ViewHolder {

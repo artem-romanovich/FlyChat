@@ -100,30 +100,27 @@ public class NewMessageAdapterMoreLays extends ArrayAdapter<MyMessage> {
             viewHolder.text_message.setTextColor(Color.parseColor("#EF5350"));
             viewHolder.text_message.setText(s.substring(3, s.length() - 3));
             viewHolder.text_message.setTextSize(25);
-        }
-
-        if (s.charAt(0) == '|' && s.charAt(1) == 'b' && s.charAt(2) == '|' &&
+        } else if (s.charAt(0) == '|' && s.charAt(1) == 'b' && s.charAt(2) == '|' &&
                 s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'b' && s.charAt(s.length() - 1) == '|'
         ) {
             viewHolder.text_message.setTextColor(Color.parseColor("#FF03DAC5"));
             viewHolder.text_message.setText(s.substring(3, s.length() - 3));
             viewHolder.text_message.setTextSize(25);
-        }
-
-        if (s.charAt(0) == '|' && s.charAt(1) == 'g' && s.charAt(2) == '|' &&
+        } else if (s.charAt(0) == '|' && s.charAt(1) == 'g' && s.charAt(2) == '|' &&
                 s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'g' && s.charAt(s.length() - 1) == '|'
         ) {
             viewHolder.text_message.setTextColor(Color.parseColor("#FBC02D"));
             viewHolder.text_message.setText(s.substring(3, s.length() - 3));
             viewHolder.text_message.setTextSize(25);
-        }
-
-        if (s.charAt(0) == '|' && s.charAt(1) == 'p' && s.charAt(2) == '|' &&
+        } else if (s.charAt(0) == '|' && s.charAt(1) == 'p' && s.charAt(2) == '|' &&
                 s.charAt(s.length() - 3) == '|' && s.charAt(s.length() - 2) == 'p' && s.charAt(s.length() - 1) == '|'
         ) {
             viewHolder.text_message.setTextColor(Color.parseColor("#D271E3"));
             viewHolder.text_message.setText(s.substring(3, s.length() - 3));
             viewHolder.text_message.setTextSize(25);
+        } else {
+            viewHolder.text_message.setTextColor(Color.parseColor("#FFFFFFFF"));
+            viewHolder.text_message.setTextSize(15);
         }
     }
 
