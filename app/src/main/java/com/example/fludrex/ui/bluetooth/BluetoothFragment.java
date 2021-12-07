@@ -1,14 +1,11 @@
 package com.example.fludrex.ui.bluetooth;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -31,23 +28,19 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import com.example.fludrex.BottomNavigationActivity;
 import com.example.fludrex.CurrentTime;
-import com.example.fludrex.InternetActivity;
+import com.example.fludrex.MessageAdapter;
 import com.example.fludrex.MyBluetoothDevices;
 import com.example.fludrex.MyMessage;
-import com.example.fludrex.NewBluetoothAdapter;
-import com.example.fludrex.NewMessageAdapterMoreLays;
+import com.example.fludrex.BluetoothAdapter;
 import com.example.fludrex.R;
 import com.example.fludrex.ReplaceRepeat;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -80,7 +73,7 @@ public class BluetoothFragment extends Fragment {
     private static final UUID MY_UUID = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private static final int REQUEST_ENABLE_BT = 1;
 
-    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    android.bluetooth.BluetoothAdapter bluetoothAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
 
     String TAG = "BluetoothFragment";
 
@@ -105,13 +98,13 @@ public class BluetoothFragment extends Fragment {
 
     public ArrayList<MyBluetoothDevices> devices;
     public ListView devicesList;
-    public NewBluetoothAdapter adapter;
+    public BluetoothAdapter adapter;
     public ArrayList<String> DEVICES;
     public ArrayList<String> DEVICES_NAME_ONLY;
 
     public ArrayList<MyBluetoothDevices> connected_devices;
     public ListView connected_devicesList, messages_blt_listview;
-    public NewBluetoothAdapter connected_adapter;
+    public BluetoothAdapter connected_adapter;
     public ArrayList<String> connected_DEVICES;
 
     public ArrayList<BluetoothDevice> BluetoothDevices;
@@ -120,8 +113,8 @@ public class BluetoothFragment extends Fragment {
     public ArrayList<MyMessage> messages = new ArrayList<>();
     public ArrayList<String> MESSAGES;
     public Map<String, MyMessage> map;
-    NewMessageAdapterMoreLays madapter;
-    BluetoothAdapter mBtAdapter;
+    MessageAdapter madapter;
+    android.bluetooth.BluetoothAdapter mBtAdapter;
 
     String my_nic;
 
@@ -187,7 +180,7 @@ public class BluetoothFragment extends Fragment {
                 }
 
                 messagesList = root.findViewById(R.id.messages_blt_listview);
-                madapter = new NewMessageAdapterMoreLays(requireContext(), MESSAGES, messages, my_nic, 1);                   //!!!!!!!!!!!
+                madapter = new MessageAdapter(requireContext(), MESSAGES, messages, my_nic, 1);                   //!!!!!!!!!!!
                 messagesList.setAdapter(madapter);
                 madapter.notifyDataSetChanged();*/
             //messagesList.setSelection(MESSAGES.size());
@@ -196,7 +189,7 @@ public class BluetoothFragment extends Fragment {
             devices = new ArrayList<MyBluetoothDevices>();
 
             devicesList = root.findViewById(R.id.available_devices);
-            adapter = new NewBluetoothAdapter(requireActivity(), R.layout.blt_device_item, devices);
+            adapter = new BluetoothAdapter(requireActivity(), R.layout.blt_device_item, devices);
             devicesList.setAdapter(adapter);
             adapter.notifyDataSetChanged();
             DEVICES = new ArrayList<>();
@@ -204,7 +197,7 @@ public class BluetoothFragment extends Fragment {
 
             connected_devices = new ArrayList<MyBluetoothDevices>();
             connected_devicesList = root.findViewById(R.id.connected_devices);
-            connected_adapter = new NewBluetoothAdapter(requireActivity(), R.layout.blt_device_item, connected_devices);
+            connected_adapter = new BluetoothAdapter(requireActivity(), R.layout.blt_device_item, connected_devices);
             connected_devicesList.setAdapter(connected_adapter);
             connected_adapter.notifyDataSetChanged();
             connected_DEVICES = new ArrayList<>();
@@ -221,10 +214,10 @@ public class BluetoothFragment extends Fragment {
                 public void onClick(View v) {
 
                     //Запрос разрешения на перевод телефона в режим видимости для других телефонов (на 300 СЕКУНД)
-                    boolean hasDiscoverablePermission = bluetoothAdapter.getScanMode() == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE;
+                    boolean hasDiscoverablePermission = bluetoothAdapter.getScanMode() == android.bluetooth.BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE;
                     if (!hasDiscoverablePermission) {
-                        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-                        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+                        Intent discoverableIntent = new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                        discoverableIntent.putExtra(android.bluetooth.BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
                         startActivity(discoverableIntent);
 
                         //btn_agree_finding.setText("Нажмите, чтобы проверить разрешения\n\nПри необходимости выйдите и снова зайдите во вкладку \"Bluetooth\"");
@@ -292,7 +285,7 @@ public class BluetoothFragment extends Fragment {
                             }*/
 
                             //Создание экземпляра класса BluetoothAdapter необходимо для любой работы с Bluetooth
-                            mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+                            mBtAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
 
                             //Установление слушателя событий нажатия кнопки "Поиск устройств"
                             button_podcl.setOnClickListener(new View.OnClickListener() {
@@ -652,7 +645,7 @@ public class BluetoothFragment extends Fragment {
                                         Log.wtf("Вывод keys_after", keys_after.get(i));
                                     }
 
-                                    madapter = new NewMessageAdapterMoreLays(requireContext(), MESSAGES, messages, my_nic);                   //!!!!!!!!!!!
+                                    madapter = new MessageAdapter(requireContext(), MESSAGES, messages, my_nic);                   //!!!!!!!!!!!
                                     messagesList.setAdapter(madapter);
                                     madapter.notifyDataSetChanged();
 

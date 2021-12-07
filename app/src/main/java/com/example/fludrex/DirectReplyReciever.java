@@ -2,9 +2,11 @@ package com.example.fludrex;
 
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,7 +20,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -51,8 +52,6 @@ public class DirectReplyReciever extends BroadcastReceiver {
     String get_key;
 
     Bundle remoteInput;
-
-    int[] listner_status;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -136,7 +135,7 @@ public class DirectReplyReciever extends BroadcastReceiver {
                             key_public_Ref.addValueEventListener(new ValueEventListener() {
                                 @RequiresApi(api = Build.VERSION_CODES.O)
                                 @Override
-                                public void onDataChange(@NotNull DataSnapshot dataSnapshot11) {
+                                public void onDataChange(DataSnapshot dataSnapshot11) {
                                     if (dataSnapshot11.exists()) {
                                         try {
 
@@ -157,8 +156,11 @@ public class DirectReplyReciever extends BroadcastReceiver {
                                             String nkey = USER[0].push().getKey();
                                             Log.wtf("nkey", nkey);
                                             assert nkey != null;
+                                            //USER[0].child(nkey).setValue(nkey + "<" + currentTime.getCurrentTimeFromBase(delay_time_long[0]) + encrypt_sent_message);
+                                            //NOTIFICATION[0].child(nkey).setValue(nkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
+
                                             USER[0].child(nkey).setValue(nkey + "<" + currentTime.getCurrentTimeFromBase(delay_time_long[0]) + encrypt_sent_message);
-                                            NOTIFICATION[0].child(nkey).setValue(nkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
+                                            //NOTIFICATION[0].child(nkey).setValue(nkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
 
                                         } catch (Exception e) {
                                             e.printStackTrace();
@@ -166,7 +168,7 @@ public class DirectReplyReciever extends BroadcastReceiver {
                                     }
                                 }
                                 @Override
-                                public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                                public void onCancelled(@NonNull DatabaseError error) {
                                 }
                             });
                         }
@@ -178,6 +180,11 @@ public class DirectReplyReciever extends BroadcastReceiver {
 
                 MessageListeningService.sendNotification(context);
                 MessageListeningService.removeAllNotifications(context);
+
+                PackageManager pm  = context.getPackageManager();
+                ComponentName componentName = new ComponentName(context, DirectReplyReciever.class);
+                pm.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP);
             }
         } catch (Exception e) {
             e.printStackTrace();

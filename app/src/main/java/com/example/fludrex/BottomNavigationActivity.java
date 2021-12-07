@@ -1,25 +1,16 @@
 package com.example.fludrex;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.View;
 import android.widget.Toast;
-
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -27,11 +18,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Objects;
 
@@ -89,7 +77,7 @@ public class BottomNavigationActivity extends AppCompatActivity {
         try {
             BufferedWriter bs = new BufferedWriter(new OutputStreamWriter(
                     openFileOutput("file_secret_field", MODE_PRIVATE)));
-            String secret_field = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAOc9PSHdGyL+SwYokr1xBo48GuBjaKLHQlvCA7PTY6WMllh9IJ31DbtJ08ATDwW+q0Pk7wM80d5kF1lUMXsUNkCAwEAAQ";
+            String secret_field = "uCosj6JYc5QDIkoClaR*cCR";
             bs.write(secret_field);
             bs.close();
 
@@ -141,13 +129,5 @@ public class BottomNavigationActivity extends AppCompatActivity {
     public void stopService() {
         Intent serviceIntent = new Intent(this, MessageListeningService.class);
         startService(serviceIntent);
-    }
-
-    public void allusers(View view) {
-        if (toast != null) {
-            toast.cancel();
-        }
-        toast = Toast.makeText(getApplicationContext(), "Будет доступно позже", Toast.LENGTH_SHORT);
-        toast.show();
     }
 }

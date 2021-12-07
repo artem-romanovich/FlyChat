@@ -6,10 +6,9 @@ package com.example.fludrex.ui.contacts;
 //В коде можно посмотреть разницу между реализациями каждого варианта.
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.content.ComponentName;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +16,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -43,10 +43,10 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.fludrex.BottomNavigationActivity;
+import com.example.fludrex.ContactsAdapter;
 import com.example.fludrex.InternetActivity;
 import com.example.fludrex.MyContacts;
 import com.example.fludrex.MyMessage;
-import com.example.fludrex.NewContactsAdapter;
 import com.example.fludrex.R;
 import com.example.fludrex.RegistrationActivity;
 import com.example.fludrex.ReplaceRepeat;
@@ -61,7 +61,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -80,16 +79,12 @@ import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import static android.content.ContentValues.TAG;
-import static android.content.Context.ACTIVITY_SERVICE;
 
 /*
     Всего в приложении используются 3 фрагмента. Все они прикреплены к BottomNavigationActivity.
@@ -104,7 +99,7 @@ import static android.content.Context.ACTIVITY_SERVICE;
 public class ContactsFragment extends Fragment {
 
     EditText find_username1;
-    Button btn_find_user1;
+    Button btn_find_user1, top_delete;
     LinearLayout linlay_bar, linlay_list, linlay_btn, linallusers;
     ListView listView;
 
@@ -127,7 +122,7 @@ public class ContactsFragment extends Fragment {
     private final String file_email = "file_email";
     private final String file_nic = "file_nic";
 
-    public int my_version = 5;  //!!!
+    public int my_version = 173;  //!!!
     public int last_version;
     public String status;
 
@@ -161,6 +156,7 @@ public class ContactsFragment extends Fragment {
         mySwipeRefreshLayout = rootView.findViewById(R.id.swiperefresh);
         listView = rootView.findViewById(R.id.contacts_listview1);
         linallusers = rootView.findViewById(R.id.linallusers);
+        top_delete = rootView.findViewById(R.id.top_delete);
 
         btn_find_user1.setBackgroundResource(R.drawable.btn_selector);
 
@@ -254,7 +250,11 @@ public class ContactsFragment extends Fragment {
                                     handler.postDelayed(new Runnable() {
                                         public void run() {
                                             if (pass[0]) {
-                                                start(my_nic, map, rootView);
+                                                try {
+                                                    start(my_nic, map, rootView);
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
                                             } else {
                                                 Toast.makeText(requireActivity(),
                                                         "Ведутся работы, приложение временно недоступно", Toast.LENGTH_LONG).show();
@@ -281,7 +281,27 @@ public class ContactsFragment extends Fragment {
                                             Log.wtf("Version", String.valueOf(last_version));
 
                                             if (last_version == my_version) {
-                                                start(my_nic, map, rootView);
+                                                try {
+                                                    start(my_nic, map, rootView);
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            } else {
+
+                                                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                                                builder.setTitle("Требуется обновление")
+                                                        .setMessage("Неактуальная версия приложения. Требуется обновление на сайте")
+                                                        .setNegativeButton("Обновить", new DialogInterface.OnClickListener() {
+                                                            @Override
+                                                            public void onClick(DialogInterface dialog, int which) {
+
+                                                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://artem-romanovich.github.io/flychat_share/"));
+                                                                startActivity(browserIntent);
+                                                            }
+                                                        });
+                                                AlertDialog dialog = builder.create();
+
+                                                dialog.show();
                                             }
                                         }
 
@@ -342,7 +362,7 @@ public class ContactsFragment extends Fragment {
         return rootView;
     }
 
-    public void start(String my_nic, Map<String, MyMessage> map, View rootView) {
+    public void start(String my_nic, Map<String, MyMessage> map, View rootView) throws IOException {
 
         //загружаем сохраненные данные о контактах
         loadDataContacts(my_nic);
@@ -350,7 +370,7 @@ public class ContactsFragment extends Fragment {
         //contacts = new ArrayList<>();
         //CONTACTS = new ArrayList<>();
 
-        ArrayList<MyMessage> messages = new ArrayList<MyMessage>();
+        /*ArrayList<MyMessage> messages = new ArrayList<MyMessage>();
         //MESSAGES = new ArrayList<>();
         SharedPreferences sharedPreferencesarrayall = requireActivity().getSharedPreferences("sharedPreferencesarrayall" + my_nic, Context.MODE_PRIVATE);
         //this.requireActivity().getSharedPreferences("sharedPreferencesarrayall", 0).edit().clear().apply();
@@ -386,26 +406,30 @@ public class ContactsFragment extends Fragment {
                 messages.add(help_array_messages.get(i));
             }
         }
-//?????????????????????????????????
-        if (keys_after.size() != 0) {
-            MyMessage a = map.get(keys_after.get(keys_after.size() - 1));
-            if (a != null) {
-                String b = a.getText();
-            }
-        }
+//?????????????????????????????????*/
 
-        //Установление адаптера для вывода информации о контактах
-        NewContactsAdapter adapter = null;
-        try {
-            //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
-            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        /*CONTACTS.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        });
+        contacts.sort(new Comparator<MyContacts>() {
+            @Override
+            public int compare(MyContacts o1, MyContacts o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        adapter.sort(new Comparator<MyContacts>() {
+            @Override
+            public int compare(MyContacts o1, MyContacts o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });*/
+
+        ContactsAdapter adapter = new ContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+        adapter.notifyDataSetChanged();
         listView.setAdapter(adapter);
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
-        }
 
         //А вот теперь убираем разметку загрузки, отображавщуюся все это время, и начинаем демонстрировать главный экран
         linlay_bar.setVisibility(View.GONE);
@@ -413,7 +437,7 @@ public class ContactsFragment extends Fragment {
         linlay_btn.setVisibility(View.VISIBLE);
 
         LISTEN_REQUEST = database.getReference(secret_field + "/Request/" + my_nic);
-        NewContactsAdapter finalAdapter2 = adapter;
+        ContactsAdapter finalAdapter3 = adapter;
         final ChildEventListener childEventListener = LISTEN_REQUEST.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NotNull DataSnapshot datasnapshotLR, String previousChildName) {
@@ -445,7 +469,7 @@ public class ContactsFragment extends Fragment {
                                             //Добавление в список контактов, обновление адаптера
                                             contacts.add(new MyContacts(new_user_name, "offline"));
                                             CONTACTS.add(new_user_nic);
-                                            finalAdapter2.notifyDataSetChanged();
+                                            finalAdapter3.notifyDataSetChanged();
 
                                             //Составление id чата (подробнее - ниже при самосотоятельном добавлении), создание публичного ключа, отправление его в БД, сохранение
                                             chatId = "Chat_" + new_user_nic + "_" + my_nic;
@@ -458,8 +482,8 @@ public class ContactsFragment extends Fragment {
 
                                             //Обновление адаптера
                                             ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                            listView.setAdapter(finalAdapter2);
-                                            finalAdapter2.notifyDataSetChanged();
+                                            listView.setAdapter(finalAdapter3);
+                                            finalAdapter3.notifyDataSetChanged();
 
                                         } else { //Если данный пользователь уже есть в списке контактов
                                             Toast.makeText(getActivity(), "Пользователь уже есть в вашем списке", Toast.LENGTH_SHORT).show();
@@ -507,7 +531,6 @@ public class ContactsFragment extends Fragment {
         });
 
         //Установление слушателя событий нажатия кнопки "Искать"
-        NewContactsAdapter finalAdapter = adapter;
         btn_find_user1.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -515,6 +538,8 @@ public class ContactsFragment extends Fragment {
                 return false;
             }
         });
+        ContactsAdapter finalAdapter1 = adapter;
+        ContactsAdapter finalAdapter2 = adapter;
         btn_find_user1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -558,7 +583,7 @@ public class ContactsFragment extends Fragment {
                                             //Добавление в спиок контактов, поднятие флажка
                                             contacts.add(new MyContacts(my_name, "itsme"));
                                             CONTACTS.add(user_nic);
-                                            finalAdapter.notifyDataSetChanged();
+                                            finalAdapter1.notifyDataSetChanged();
                                             flag = 1;
                                             find_username1.setText("");
                                             //Добавляем в массив, создаем key pair, сохраняем.
@@ -604,7 +629,7 @@ public class ContactsFragment extends Fragment {
                                                 //Добавление в спиок контактов, поднятие флажка
                                                 contacts.add(new MyContacts(get_name_from_base, status));
                                                 CONTACTS.add(user_nic);
-                                                finalAdapter.notifyDataSetChanged();
+                                                finalAdapter2.notifyDataSetChanged();
                                                 flag = 1;
                                                 find_username1.setText("");
 
@@ -645,9 +670,9 @@ public class ContactsFragment extends Fragment {
                                             } else {
                                                 Toast.makeText(getActivity(), "Пользователь " + get_name_from_base + " успешно найден!", Toast.LENGTH_SHORT).show();
                                                 ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                                                NewContactsAdapter adapter = null;
+                                                ContactsAdapter adapter = null;
                                                 try {
-                                                    adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                                                    adapter = new ContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
                                                 } catch (IOException e) {
                                                     e.printStackTrace();
                                                 }
@@ -669,7 +694,7 @@ public class ContactsFragment extends Fragment {
                                 }
                             }
                         } else { //Если поле пустое, уведомляем
-                            Toast.makeText(getActivity(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getActivity(), "Пустое поле ввода", Toast.LENGTH_SHORT).show();
                             btn_find_user1.setClickable(true);
                         }
                     }
@@ -681,7 +706,7 @@ public class ContactsFragment extends Fragment {
         });
 
         //В приложение добавлен SwipeRefreshLayout. Фактически, в нем нет необходимости. Все данные о пользователях
-        //из списка контактов и так автоматически обновляются (listener расположен в NewContactsAdapter).
+        //из списка контактов и так автоматически обновляются (listener расположен в ContactsAdapter).
         //Однако добавление может оказаться полезным в возможных непредусмотренных ситуациях.
         mySwipeRefreshLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#FFFFFFFF"));
         mySwipeRefreshLayout.setColorSchemeColors(Color.parseColor("#FF5085A5"));
@@ -690,10 +715,10 @@ public class ContactsFragment extends Fragment {
                     @Override
                     public void onRefresh() { //Обновляем адаптер, статус пользователя, с небольшой задержкой отключаем SwipeRefreshLayout.
                         ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                        NewContactsAdapter adapter = null;
+                        ContactsAdapter adapter = null;
                         try {
-                            //adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
-                            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                            //adapter = new ContactsAdapter(getActivity(), R.layout.contact_item, contacts, CONTACTS);
+                            adapter = new ContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -711,7 +736,23 @@ public class ContactsFragment extends Fragment {
         );
 
         //Условие длительного нажатия на элемент списка
-        NewContactsAdapter finalAdapter1 = adapter;
+        /*Log.wtf("4", String.valueOf(CONTACTS));
+        Log.wtf("4", String.valueOf(contacts));
+        Log.wtf("4", String.valueOf(adapter));
+
+        CONTACTS.sort(String::compareTo);
+        contacts.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+        adapter.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+        Log.wtf("4", String.valueOf(CONTACTS));
+        Log.wtf("4", String.valueOf(contacts));
+        Log.wtf("4", String.valueOf(adapter));*/
+
+        adapter = new ContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+        adapter.notifyDataSetChanged();
+
+        listView.setAdapter(adapter);
+        ContactsAdapter finalAdapter = adapter;
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -729,32 +770,32 @@ public class ContactsFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
 
                         //Впоследствии можно дореализовать удаление сообщений, пока что они хранятся.
-                                                            /*InternetActivity internetActivity = new InternetActivity();
-                                                            internetActivity.loadDataMessages();
+                        /*InternetActivity internetActivity = new InternetActivity();
+                        internetActivity.loadDataMessages();
 
-                                                            List<String> keys = internetActivity.getKeys();
-                                                            //ArrayList<MyMessage> messages = internetActivity.getMessages();
-                                                            Map<String, MyMessage> map = internetActivity.getMap();
+                        List<String> keys = internetActivity.getKeys();
+                        //ArrayList<MyMessage> messages = internetActivity.getMessages();
+                        Map<String, MyMessage> map = internetActivity.getMap();
 
-                                                            //ArrayList<MyContacts> contactsList = adapter.getContactsList();
-                                                            //MyContacts contacts_from = contactsList.get(position);
-                                                            //String name_interlocutor_to_remove = contacts_from.getName();
+                        //ArrayList<MyContacts> contactsList = adapter.getContactsList();
+                        //MyContacts contacts_from = contactsList.get(position);
+                        //String name_interlocutor_to_remove = contacts_from.getName();
 
-                                                            for (int i = 0; i < keys.size(); i++) {
-                                                                if (keys.get(i).contains(CONTACTS.get(position))) {
-                                                                    map.remove(keys.get(i));
-                                                                }
-                                                            }*/
+                        for (int i = 0; i < keys.size(); i++) {
+                            if (keys.get(i).contains(CONTACTS.get(position))) {
+                                map.remove(keys.get(i));
+                            }
+                        }*/
 
                         //Удаление, сохранение
-                        contacts.remove(finalAdapter1.getItem(position));
+                        contacts.remove(finalAdapter.getItem(position));
                         CONTACTS.remove(position);
                         CHAT_NUMBER.remove(position);
 
                         ListView listView = rootView.findViewById(R.id.contacts_listview1);
-                        NewContactsAdapter adapter = null;
+                        ContactsAdapter adapter = null;
                         try {
-                            adapter = new NewContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
+                            adapter = new ContactsAdapter(getActivity(), R.layout.contact_item_new, contacts, CONTACTS);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -811,20 +852,24 @@ public class ContactsFragment extends Fragment {
                                             if (snapshot.exists()) {
                                                 String interlocutor_name = snapshot.getValue(String.class);
                                                 if (listen_to_internet[0] == 1) {
+                                                    try {
 
-                                                    Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
+                                                        Intent intent = new Intent(ContactsFragment.this.requireActivity(), InternetActivity.class);
 
-                                                    String current_interlocutor = CONTACTS.get(position);
-                                                    intent.putExtra("current_interlocutor", current_interlocutor);
+                                                        String current_interlocutor = CONTACTS.get(position);
+                                                        intent.putExtra("current_interlocutor", current_interlocutor);
 
-                                                    intent.putExtra("nameinterlocutor", interlocutor_name);
+                                                        intent.putExtra("nameinterlocutor", interlocutor_name);
 
-                                                    String current_chat = CHAT_NUMBER.get(position);
-                                                    intent.putExtra("current_chat", current_chat);
-                                                    startActivity(intent);
+                                                        String current_chat = CHAT_NUMBER.get(position);
+                                                        intent.putExtra("current_chat", current_chat);
+                                                        startActivity(intent);
 
-                                                    linlay_bar.setVisibility(View.VISIBLE);
-                                                    linlay_list.setVisibility(View.GONE);
+                                                        linlay_bar.setVisibility(View.VISIBLE);
+                                                        linlay_list.setVisibility(View.GONE);
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                    }
                                                 }
                                             }
                                         }
@@ -872,7 +917,6 @@ public class ContactsFragment extends Fragment {
 
                                     @Override
                                     public void onCancelled(@NonNull @NotNull DatabaseError error) {
-
                                     }
                                 });
                             }
@@ -897,6 +941,78 @@ public class ContactsFragment extends Fragment {
                 }
             }
         });
+
+        top_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseReference AllUsers = FirebaseDatabase.getInstance().getReference(secret_field + "/Users");
+                AllUsers.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        //Get map of users in datasnapshot
+                        collectUsers((Map<String, Object>) dataSnapshot.getValue());
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        //handle databaseError
+                    }
+                });
+            }
+        });
+    }
+
+    private void collectUsers(Map<String, Object> users) {
+
+        ArrayList<String> Users = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : users.entrySet()) {
+
+            Map singleUser = (Map) entry.getValue();
+            String user = singleUser.get("name") + " (" + singleUser.get("nickname") + ")";
+            Users.add(user);
+        }
+        Collections.sort(Users);
+
+        StringBuilder userstr = new StringBuilder();
+        for (int i = 0; i < Users.size(); i++) {
+            userstr.append(Users.get(i) + '\n');
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Список всех пользователей")
+                .setMessage(userstr.toString())
+                .setNegativeButton("Пригласить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        DatabaseReference link = database.getReference(secret_field + "/Status/sharelink");
+                        link.addValueEventListener(new ValueEventListener() {
+                            @SuppressLint("SetTextI18n")
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
+                                    ClipboardManager clipboard = (ClipboardManager) requireActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                                    ClipData clip = ClipData.newPlainText("", dataSnapshot.getValue(String.class));
+                                    clipboard.setPrimaryClip(clip);
+                                    Toast.makeText(requireContext(),
+                                            "Ссылка скопирована", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                            }
+                        });
+                    }
+                })
+                .setPositiveButton("ОК", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
     }
 
     //Метод, проверяющий соединение с интернетом

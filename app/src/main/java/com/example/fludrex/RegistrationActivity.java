@@ -31,9 +31,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.ActionCodeSettings;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -48,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -63,8 +60,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 
 import javax.crypto.Cipher;
-
-import static android.content.ContentValues.TAG;
 
 /*
     RegistrationActivity создана для регистрации.
@@ -101,7 +96,7 @@ public class RegistrationActivity extends AppCompatActivity {
     DatabaseReference User_password;
     DatabaseReference User_email;
 
-    public int my_version = 5;  //!!!
+    public int my_version = 173;  //!!!
 
     private FirebaseAuth mAuth;
     public FirebaseUser currentUser;
@@ -644,26 +639,12 @@ public class RegistrationActivity extends AppCompatActivity {
                                         int last_version = datasnapshot.getValue(Integer.class);
                                         Log.wtf("Version", String.valueOf(last_version));
 
-                                        //Данные массивы нужны просто для корретного отображения информация через Toast.
-                                        String[] versionnumber = {" ", "(первая) ", "(вторая) ", "(третья) ", "(четвертая) ", "(пятая) "};
-                                        String[] versionnumber2 = {"", "первой", "второй", "третьей", "четвертой", "пятой"};
-
                                         if (last_version != my_version) {
 
-                                            //Если версия не последняя, пользователь об этом уведомляется. Доступ запрещается
-                                            //в связи с возможными проблемами при несовместимости версий
-                                            if (last_version < versionnumber2.length) {
-                                                Toast.makeText(getApplicationContext(), "Неактуальная " + versionnumber[my_version] + "версия приложения. " +
-                                                        "Требуется обновление до " + versionnumber2[last_version], Toast.LENGTH_LONG).show();
+                                                Toast.makeText(getApplicationContext(), "Неактуальная версия приложения. Требуется обновление на сайте", Toast.LENGTH_LONG).show();
                                                 Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
                                                 startActivity(intent);
                                                 finish();
-                                            } else {
-                                                Toast.makeText(getApplicationContext(), "Неактуальная версия приложения. Требуется обновление", Toast.LENGTH_LONG).show();
-                                                Intent intent = new Intent(RegistrationActivity.this, BottomNavigationActivity.class);
-                                                startActivity(intent);
-                                                finish();
-                                            }
                                         } else {
 
                                             currentUser = mAuth.getCurrentUser();

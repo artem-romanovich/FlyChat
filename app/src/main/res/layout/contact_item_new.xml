@@ -14,13 +14,12 @@
         android:textColor="?attr/colorOnPrimary">
 
         <ImageView
-            android:id="@+id/btn_edit_message"
+            android:id="@+id/contact_item"
             android:layout_width="50sp"
             android:layout_height="50sp"
             android:layout_gravity="bottom"
-            android:background="@drawable/baseline_person_black_48"
-            android:scaleType="fitCenter"
-            android:textStyle="bold" />
+            android:src="@drawable/baseline_person_black_48"
+            android:scaleType="fitCenter"/>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"

@@ -7,7 +7,6 @@ package com.example.fludrex;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -34,15 +33,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
+
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.core.SnapshotHolder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -87,14 +85,8 @@ public class InternetActivity extends AppCompatActivity {
 
     public static int max_message_length = 2500;
 
-    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    public FirebaseUser currentUser;
-    DatabaseReference ONLINE_USERS;
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference USER;
-    DatabaseReference USER_STORAGE;
     static DatabaseReference INTERLOCUTOR;
-    DatabaseReference INTERLOCUTOR_STORAGE;
     DatabaseReference REQUEST;
     DatabaseReference NOTIFICATION;
 
@@ -115,8 +107,6 @@ public class InternetActivity extends AppCompatActivity {
     public String chatId;
     String mkey;
 
-    private static final String CHANNEL_ID = "New channel";
-
     public ValueEventListener remove_message_listener;
     public static ChildEventListener childEventListener1;
     public static int listener_status = 1;
@@ -135,8 +125,6 @@ public class InternetActivity extends AppCompatActivity {
         try {
             BufferedReader br_f = new BufferedReader(new InputStreamReader(openFileInput("file_secret_field")));
             String secret_field = br_f.readLine();
-
-            startService(secret_field);
 
             BufferedReader br_nn = new BufferedReader(new InputStreamReader(openFileInput("file_nic")));
             my_nic = br_nn.readLine();
@@ -211,9 +199,12 @@ public class InternetActivity extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH:mm dd.MM.yyyy", Locale.getDefault());
-                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
-                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat3 = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                                    @SuppressLint("SimpleDateFormat")
+                                    SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH:mm dd.MM.yyyy", Locale.getDefault());
+                                    @SuppressLint("SimpleDateFormat")
+                                    SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+                                    @SuppressLint("SimpleDateFormat")
+                                    SimpleDateFormat dateFormat3 = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
                                     try {
                                         //Получаем TimeStamp (См. onStop у ContactsFragment) и переводим в дату.
@@ -377,27 +368,25 @@ public class InternetActivity extends AppCompatActivity {
             MESSAGES.clear();
             for (int i = 0; i < keys_after.size(); i++) {
                 MESSAGES.add(keys_after.get(i));
-                Log.wtf("Вывод keys_after", keys_after.get(i));
+                //Log.wtf("Вывод keys_after", keys_after.get(i));
             }
 
             //Обновляем adapter
             ListView messagesList = findViewById(R.id.messages_listview);
             //RecyclerView messagesList = findViewById(R.id.messages_listview);
-            NewMessageAdapterMoreLays adapterMoreLays = new NewMessageAdapterMoreLays(InternetActivity.this, MESSAGES, messages, my_nic);
+            MessageAdapter adapterMoreLays = new MessageAdapter(InternetActivity.this, MESSAGES, messages, my_nic);
 
             messagesList.setAdapter(adapterMoreLays);
             adapterMoreLays.notifyDataSetChanged();
             messagesList.setSelection(keys_after.size());
 
             //Обнуляем EditText
-            get_message.setText("");
+            //get_message.setText("");
 
-            //Установление слушателя событий нажатия кнопки "Отправить"
-            btn_edit_message.setOnClickListener(new View.OnClickListener() {
+            btn_edit_message.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
-                public void onClick(View v) {
+                public boolean onLongClick(View v) {
 
-                    //При отсутствиея доступа к интернету приложение для дальнейшей работы рекомендует подключиться к сети
                     if (!hasConnection(InternetActivity.this)) {
                         Toast.makeText(InternetActivity.this, "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
                         Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
@@ -405,187 +394,94 @@ public class InternetActivity extends AppCompatActivity {
                         finish();
                     } else {
 
-                        //Получаем сообщение, которое хочет отправить пользователь, от EditText
-                        sent_message = get_message.getText().toString();
+                        if (!get_message.getText().toString().equals("")) {
 
-                        //Отладка
-                        //Log.wtf("my_name", my_name);
-                        //Log.wtf("interlocutor_name", interlocutor_name);
-                        //Log.wtf("chatId", chatId);
+                            btn_edit_message.animate().rotation(-90);
+                            String[] colors = {"Обычный текст", "Красная правда", "Голубая правда", "Фиолетовая декларация", "Золотая правда"};
+                            final String[] tag = {""};
 
-                        //Очищаем переменные от лишнего мусора - пробелов в начале и конце
-                        ReplaceRepeat replaceRepeat = new ReplaceRepeat();
-                        sent_message = replaceRepeat.ReplaceRepeatStr(sent_message);
-
-                        //Проверяем, не пустое ли сообщение (в различных конфигурациях)
-                        if (sent_message.equals("") ||
-                                sent_message.equals(" ") ||
-                                sent_message.equals("/n") ||
-                                (sent_message.length() > max_message_length)) {
-
-                            //Если сообщение слишком большое, пользователь об этом до недавнего времени просто уведомлялся.
-                            //Однако теперь в приложении невозможно написать текст длиною более, чем max_message_length = 2500 символов
-                            if (sent_message.length() > max_message_length) {
-                                Toast.makeText(getApplicationContext(),
-                                        "Слишком большое (либо пустое) сообщение", Toast.LENGTH_SHORT).show();
-                            }
-                        } else { //Если сообщение не пустое
-
-                            //Получение доступа к БД Firebase. Считываем отстройку времени между сервером Firebase и физустройством.
-                            DatabaseReference offsetRef = FirebaseDatabase.getInstance().getReference(".info/serverTimeOffset");
-                            offsetRef.addValueEventListener(new ValueEventListener() {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(InternetActivity.this);
+                            builder.setTitle("Вид текста");
+                            builder.setItems(colors, new DialogInterface.OnClickListener() {
                                 @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if ("Обычный текст".equals(colors[which])) {
+                                        tag[0] = "";
 
-                                    //Считываем отстройку по времени
-                                    delay_time_long = snapshot.getValue(Long.class);
+                                    } else if ("Красная правда".equals(colors[which])) {
+                                        tag[0] = "|r|";
 
-                                    //Вызываем экземпляр класса CurrentTime, передаем отстройку, получаем текущее время в необходимом формате.
-                                    CurrentTime currentTime = new CurrentTime();
-                                    String currenttime = currentTime.getCurrentTimeFromBase(delay_time_long);
+                                    } else if ("Голубая правда".equals(colors[which])) {
+                                        tag[0] = "|b|";
 
-                                    //Разбираем строку, преобразовываем в смотрибельный вид
-                                    String get_time_To_look =
-                                            currenttime.substring(8, 10) + "." +
-                                                    currenttime.substring(10, 12) + "\n" +
-                                                    currenttime.substring(6, 8) + "." +
-                                                    currenttime.substring(4, 6) + "." +
-                                                    currenttime.substring(0, 4);
+                                    } else if ("Фиолетовая декларация".equals(colors[which])) {
+                                        tag[0] = "|p|";
 
-                                    //Получение доступа к БД Firebase. Считываем публичный ключ собеседника, чтобы кодировать ему сообщение.
-                                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                                    final DatabaseReference key_public_Ref = database.getReference(secret_field + "/Internet_Messages/" + chatId + "/" + interlocutor_nic + "_key_public");
-                                    key_public_Ref.addValueEventListener(new ValueEventListener() {
+                                    } else if ("Золотая правда".equals(colors[which])) {
+                                        tag[0] = "|g|";
+                                    }
+
+                                    DatabaseReference offsetRef = FirebaseDatabase.getInstance().getReference(".info/serverTimeOffset");
+                                    offsetRef.addValueEventListener(new ValueEventListener() {
                                         @Override
-                                        public void onDataChange(@NotNull DataSnapshot dataSnapshot11) {
-                                            if (!dataSnapshot11.exists()) { //Если публичного ключа собеседника в базе данных нет. Это свидетельствует о том, что он нас в список контактов еще не добавил.
-                                                if (!chatId.equals("Chat_" + my_nic + "_" + my_nic)) {
-
-                                                    //При попытке отправки текста появляется кнопка "Начать общение" (Точнее говоря, на все той же кнопке меняется текст).
-                                                    get_message.setVisibility(View.GONE);
-
-                                                    //Отключение клавиатуры
-                                                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                                                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-
-                                                    //Появление Snackbar, предложение запроса.
-                                                    Snackbar snackbar = Snackbar.make(v, "Пользователь еще не добавил вас в список контактов", Snackbar.LENGTH_INDEFINITE);
-                                                    snackbar.setAction("Запрос", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
-                                                        @Override
-                                                        public void onClick(View v) {
-
-                                                            //Получение доступа к БД Firebase. Отправка запроса пользователю на добавление в список контактов.
-                                                            REQUEST = database.getReference(secret_field + "/Request/" + interlocutor_nic);
-                                                            InternetActivity.this.REQUEST.push().setValue(my_nic);
-
-                                                            //Toast.makeText(getApplicationContext(), interlocutor_name + " получит ваше приглашение", Toast.LENGTH_SHORT).show();
-                                                            btn_edit_message.setVisibility(View.GONE);
-                                                            get_message.setFocusable(false);
-
-                                                            Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
-                                                            startActivity(intent);
-                                                        }
-                                                    });
-                                                    snackbar.setTextColor(0XFFFFFFFF);
-                                                    snackbar.setBackgroundTint(0XFF31708E);
-                                                    snackbar.setActionTextColor(0XFFFFFFFF);
-                                                    snackbar.show();
-
-                                                } else {
-                                                    //Добавление сообщения и обновление адаптера. Разумеется, в чистом, некодированном, виде.
-                                                    messages.add(new MyMessage(my_name, sent_message, get_time_To_look));
-                                                    MESSAGES.add(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + my_nic);
-                                                    map.put(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + my_nic, new MyMessage(my_name, sent_message, get_time_To_look));
-                                                    saveDataMessages(my_nic, InternetActivity.this);
-                                                    adapterMoreLays.notifyDataSetChanged();
-                                                    messagesList.smoothScrollToPosition(MESSAGES.size());
-                                                }
-                                            } else {
-                                                try {
-                                                    //Получение публичного ключа
-                                                    String key_public = dataSnapshot11.getValue(String.class);
-                                                    //Log.wtf("key_public_Base64 (string)", key_public);
-
-                                                    //Преобразование публичного ключа в массив байт, последующая расшифровка до состояния "PublicKey"
-                                                    byte[] publicKeyBytes = Base64.getDecoder().decode(key_public);
-                                                    //byte[] publicKeyBytes = Base64.decode(key_public, Base64.NO_PADDING | Base64.NO_WRAP);
-                                                    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                                                    X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-                                                    PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-
-                                                    //Определяем, что мы с помощью данного ключа будем шифровать сообщение
-                                                    Cipher rsa = Cipher.getInstance("RSA");
-                                                    rsa.init(Cipher.ENCRYPT_MODE, publicKey);
-
-                                                    //И непосредственно это и делаем - шифруем сообщение, переводим в строку
-                                                    String encrypt_sent_message = Base64.getEncoder().encodeToString(rsa.doFinal(sent_message.getBytes()));
-                                                    //Log.wtf("encrypt_sent_message", encrypt_sent_message);
-
-                                                    //Отправляем данную строку, приписав к ней время отправки. Затем собеседник получит ее и разберет.
-                                                    //InternetActivity.this.USER.push().setValue(currentTime.currenttime + encrypt_sent_message);
-                                                    USER = database.getReference(secret_field + "/Internet_Messages/" + "/" + chatId + "/" + my_nic);
-                                                    mkey = InternetActivity.this.USER.push().getKey();
-                                                    //Log.wtf("mkey", mkey);
-                                                    assert mkey != null;
-                                                    InternetActivity.this.USER.child(mkey).setValue(mkey + "<" + currentTime.currenttime + encrypt_sent_message);
-                                                    InternetActivity.this.NOTIFICATION.child(mkey).setValue(
-                                                            mkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
-                                                    //NOTIFICATION.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
-
-                                                    //Добавление сообщения и обновление адаптера. Разумеется, в чистом, некодированном, виде.
-                                                    messages.add(new MyMessage(my_name, sent_message, get_time_To_look));
-                                                    MESSAGES.add(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic);
-                                                    map.put(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic, new MyMessage(my_name, sent_message, get_time_To_look));
-                                                    saveDataMessages(my_nic, InternetActivity.this);
-                                                    adapterMoreLays.notifyDataSetChanged();
-                                                    messagesList.smoothScrollToPosition(MESSAGES.size());
-
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            delay_time_long = snapshot.getValue(Long.class);
+                                            sendMessege(tag[0], secret_field, adapterMoreLays, messagesList, delay_time_long);
                                         }
 
                                         @Override
-                                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                                        public void onCancelled(@NonNull DatabaseError error) {
                                         }
                                     });
-                                    //Обнуляем EditText
-                                    get_message.setText("");
-                                }
 
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
+                                    btn_edit_message.setRotation(0);
                                 }
                             });
+                            AlertDialog dialog = builder.create();
+                            dialog.setCancelable(false);
+                            dialog.setCanceledOnTouchOutside(false);
+                            dialog.show();
                         }
+                    }
+                    return false;
+                }
+            });
+
+            //Установление слушателя событий нажатия кнопки "Отправить"
+            btn_edit_message.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    if (!hasConnection(InternetActivity.this)) {
+                        Toast.makeText(InternetActivity.this, "Отсутствует подключение к интернету", Toast.LENGTH_LONG).show();
+                        Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+
+                        DatabaseReference offsetRef = FirebaseDatabase.getInstance().getReference(".info/serverTimeOffset");
+                        offsetRef.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                delay_time_long = snapshot.getValue(Long.class);
+                                sendMessege("", secret_field, adapterMoreLays, messagesList, delay_time_long);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                            }
+                        });
                     }
                 }
             });
 
-            messagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            messagesList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                 @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position,
+                                               long id) {
 
                     MyMessage message = adapterMoreLays.getItem(position);
 
-                    /*//Появление Snackbar, предложение запроса.
-                    Snackbar snackbar = Snackbar.make(view, "Скопировать текст сообщения?", Snackbar.LENGTH_SHORT);
-                    snackbar.setAction("Да", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
-                        @Override
-                        public void onClick(View v) {
-                            Toast.makeText(getApplicationContext(),
-                                    "Текст скопирован", Toast.LENGTH_SHORT).show();
-
-                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("", message.getText());
-                            clipboard.setPrimaryClip(clip);
-                        }
-                    });
-                    snackbar.setTextColor(0XFFFFFFFF);
-                    snackbar.setBackgroundTint(0XFF31708E);
-                    snackbar.setActionTextColor(0XFFFFFFFF);
-                    snackbar.show();*/
                     current_interlocutor.setVisibility(View.GONE);
                     linlay_extra.setVisibility(View.VISIBLE);
 
@@ -649,6 +545,7 @@ public class InternetActivity extends AppCompatActivity {
                             alert.show();
                         }
                     });
+                    return false;
                 }
             });
 
@@ -656,7 +553,8 @@ public class InternetActivity extends AppCompatActivity {
             INTERLOCUTOR = database.getReference(secret_field + "/Internet_Messages/" + "/" + chatId + "/" + interlocutor_nic);
             childEventListener1 = new ChildEventListener() {
                 @Override
-                public void onChildAdded(@NotNull DataSnapshot datasnapshot, String previousChildName) {
+                public void onChildAdded(@NotNull DataSnapshot datasnapshot, String
+                        previousChildName) {
 
                     //Получаем сообщение
                     String get_message = datasnapshot.getValue(String.class);
@@ -754,6 +652,155 @@ public class InternetActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void sendMessege(String TAG, String secret_field, MessageAdapter
+            adapterMoreLays, ListView messagesList, Long delay_time_long) {
+
+        //Получаем сообщение, которое хочет отправить пользователь, от EditText
+        sent_message = get_message.getText().toString();
+
+        //Очищаем переменные от лишнего мусора - пробелов в начале и конце
+        ReplaceRepeat replaceRepeat = new ReplaceRepeat();
+        sent_message = replaceRepeat.ReplaceRepeatStr(sent_message);
+
+        //Проверяем, не пустое ли сообщение (в различных конфигурациях)
+        if (!sent_message.equals("") && !sent_message.equals(" ") && !sent_message.equals("/n") && (sent_message.length() <= max_message_length)) { //Если сообщение не пустое
+
+            //Вызываем экземпляр класса CurrentTime, передаем отстройку, получаем текущее время в необходимом формате.
+            CurrentTime currentTime = new CurrentTime();
+            String currenttime = currentTime.getCurrentTimeFromBase(delay_time_long);
+
+            //Разбираем строку, преобразовываем в смотрибельный вид
+            String get_time_To_look =
+                    currenttime.substring(8, 10) + "." +
+                            currenttime.substring(10, 12) + "\n" +
+                            currenttime.substring(6, 8) + "." +
+                            currenttime.substring(4, 6) + "." +
+                            currenttime.substring(0, 4);
+
+            //Получение доступа к БД Firebase. Считываем публичный ключ собеседника, чтобы кодировать ему сообщение.
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            final DatabaseReference key_public_Ref = database.getReference(secret_field + "/Internet_Messages/" + chatId + "/" + interlocutor_nic + "_key_public");
+            key_public_Ref.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NotNull DataSnapshot dataSnapshot11) {
+                    if (!dataSnapshot11.exists()) {
+                        if (!chatId.equals("Chat_" + my_nic + "_" + my_nic)) {
+
+                            //При попытке отправки текста появляется кнопка "Начать общение" (Точнее говоря, на все той же кнопке меняется текст).
+                            get_message.setVisibility(View.GONE);
+
+                            //Отключение клавиатуры
+                            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(btn_edit_message.getWindowToken(), 0);
+
+                            //Появление Snackbar, предложение запроса.
+                            Snackbar snackbar = Snackbar.make(btn_edit_message, "Пользователь еще не добавил вас в список контактов", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Запрос", new View.OnClickListener() { //Пользователь хочет общаться с собеседника
+                                @Override
+                                public void onClick(View v) {
+
+                                    //Получение доступа к БД Firebase. Отправка запроса пользователю на добавление в список контактов.
+                                    REQUEST = database.getReference(secret_field + "/Request/" + interlocutor_nic);
+                                    InternetActivity.this.REQUEST.push().setValue(my_nic);
+
+                                    //Toast.makeText(getApplicationContext(), interlocutor_name + " получит ваше приглашение", Toast.LENGTH_SHORT).show();
+                                    btn_edit_message.setVisibility(View.GONE);
+                                    get_message.setFocusable(false);
+
+                                    Intent intent = new Intent(InternetActivity.this, BottomNavigationActivity.class);
+                                    startActivity(intent);
+                                }
+                            });
+                            snackbar.setTextColor(0XFFFFFFFF);
+                            snackbar.setBackgroundTint(0XFF31708E);
+                            snackbar.setActionTextColor(0XFFFFFFFF);
+                            snackbar.show();
+
+                        } else {
+                            //Добавление сообщения и обновление адаптера. Разумеется, в чистом, некодированном, виде.
+                            messages.add(new MyMessage(my_name, sent_message, get_time_To_look));
+                            MESSAGES.add(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + my_nic);
+                            map.put(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + my_nic, new MyMessage(my_name, sent_message, get_time_To_look));
+                            saveDataMessages(my_nic, InternetActivity.this);
+                            adapterMoreLays.notifyDataSetChanged();
+                            messagesList.smoothScrollToPosition(MESSAGES.size());
+                        }
+                    } else {
+                        try {
+
+                                        /*if (MessageListeningService.NOTIFICATION != null && MessageListeningService.childEventListener != null) {
+                                            MessageListeningService.NOTIFICATION.removeEventListener(MessageListeningService.childEventListener);
+                                        }
+                                        if (MessageListeningService.connectedRef != null && MessageListeningService.connectedEventListener != null) {
+                                            MessageListeningService.connectedRef.removeEventListener(MessageListeningService.connectedEventListener);
+                                        }
+
+                                        PackageManager pm  = InternetActivity.this.getPackageManager();
+                                        ComponentName componentName = new ComponentName(InternetActivity.this, DirectReplyReciever.class);
+                                        pm.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                                                PackageManager.DONT_KILL_APP);*/
+
+                            //Получение публичного ключа
+                            String key_public = dataSnapshot11.getValue(String.class);
+                            //Log.wtf("key_public_Base64 (string)", key_public);
+
+                            //Преобразование публичного ключа в массив байт, последующая расшифровка до состояния "PublicKey"
+                            byte[] publicKeyBytes = Base64.getDecoder().decode(key_public);
+                            //byte[] publicKeyBytes = Base64.decode(key_public, Base64.NO_PADDING | Base64.NO_WRAP);
+                            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+                            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+
+                            //Определяем, что мы с помощью данного ключа будем шифровать сообщение
+                            Cipher rsa = Cipher.getInstance("RSA");
+                            rsa.init(Cipher.ENCRYPT_MODE, publicKey);
+
+                            sent_message = TAG + sent_message + TAG;
+
+                            //И непосредственно это и делаем - шифруем сообщение, переводим в строку
+                            String encrypt_sent_message = Base64.getEncoder().encodeToString(rsa.doFinal(sent_message.getBytes()));
+
+                            //Отправляем данную строку, приписав к ней время отправки. Затем собеседник получит ее и разберет.
+                            //InternetActivity.this.USER.push().setValue(currentTime.currenttime + encrypt_sent_message);
+                            USER = database.getReference(secret_field + "/Internet_Messages/" + "/" + chatId + "/" + my_nic);
+                            mkey = InternetActivity.this.USER.push().getKey();
+
+                            Log.wtf("mkey", mkey);
+                            Log.wtf("sent_message", sent_message);
+
+                            assert mkey != null;
+                            InternetActivity.this.USER.child(mkey).setValue(mkey + "<" + currentTime.currenttime + encrypt_sent_message);
+                            InternetActivity.this.NOTIFICATION.child(mkey).setValue(
+                                    mkey + "<" + my_name + "|" + my_nic + "+" + chatId + "*" + currentTime.currenttime + encrypt_sent_message);
+                            //NOTIFICATION.child("changing_field").setValue(String.valueOf(Math.random() * Long.parseLong("1000000000000000")));
+
+                            //Добавление сообщения и обновление адаптера. Разумеется, в чистом, некодированном, виде.
+                            messages.add(new MyMessage(my_name, sent_message, get_time_To_look));
+                            MESSAGES.add(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic);
+                            map.put(currenttime + "_(" + my_nic + ")_" + my_nic + "_" + interlocutor_nic, new MyMessage(my_name, sent_message, get_time_To_look));
+                            saveDataMessages(my_nic, InternetActivity.this);
+                            adapterMoreLays.notifyDataSetChanged();
+                            messagesList.smoothScrollToPosition(MESSAGES.size());
+
+                                        /*pm.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                                                PackageManager.DONT_KILL_APP);
+                                        MessageListeningService.oncreate(InternetActivity.this);*/
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                }
+            });
+            //Обнуляем EditText
+            get_message.setText("");
         }
     }
 
@@ -921,15 +968,5 @@ public class InternetActivity extends AppCompatActivity {
 
         //Возвращаем ключ сразу в формате "PrivateKey"
         return privatekey;
-    }
-
-    public void startService(String secret_field) {
-        Intent serviceIntent = new Intent(this, MessageListeningService.class);
-        ContextCompat.startForegroundService(this, serviceIntent);
-    }
-
-    public void stopService() {
-        Intent serviceIntent = new Intent(this, MessageListeningService.class);
-        startService(serviceIntent);
     }
 }

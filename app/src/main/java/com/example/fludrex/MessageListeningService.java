@@ -1,10 +1,8 @@
 package com.example.fludrex;
 
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
-import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 
@@ -13,24 +11,21 @@ import androidx.core.app.RemoteInput;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -45,11 +40,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -91,7 +82,6 @@ public class MessageListeningService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-
             String contentText = "Ожидание новых сообщений...";
             Intent intent1 = new Intent(this, GotoReciever.class);
             PendingIntent actionIntent = PendingIntent.getBroadcast(this,
@@ -101,7 +91,7 @@ public class MessageListeningService extends Service {
                     .setSound(null)
                     .setSilent(true);
             Notification notification = builder
-                    .setContentTitle("FlyChat")
+                    .setContentTitle("FlyChat перейти")
                     .setContentText(contentText)
                     .setContentIntent(actionIntent)
                     .setSmallIcon(R.mipmap.ic_launcher)
@@ -113,13 +103,6 @@ public class MessageListeningService extends Service {
             notificationManager.notify(-1, notification);
 
             startForeground(-1, notification);
-
-            /*Thread t = new Thread(() -> {
-                while (true) {
-                    //getCurrentApp();
-                }
-            });
-            t.start();*/
 
             if (tmp_nck != null) {
                 if (hasConnection(this)) {
@@ -256,9 +239,6 @@ public class MessageListeningService extends Service {
                                 if (connected) {
                                     OU.onDisconnect().setValue(ServerValue.TIMESTAMP);
                                     OU.setValue("online");
-                            /*} else {
-                                //database.goOffline();
-                                OU.setValue(ServerValue.TIMESTAMP);*/
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -283,7 +263,6 @@ public class MessageListeningService extends Service {
                 @Override
                 public void onChildAdded(@NotNull DataSnapshot datasnapshot, String previousChildName) {
                     try {
-
                         String get_user_info = datasnapshot.getValue(String.class);
 
                         if (get_user_info != null) {
@@ -305,7 +284,6 @@ public class MessageListeningService extends Service {
 
                                 String get_time_To_look = get_time.substring(8, 10) + "." + get_time.substring(10, 12) + "\n" +
                                         get_time.substring(6, 8) + "." + get_time.substring(4, 6) + "." + get_time.substring(0, 4);
-
 
                                 DatabaseReference NotifRemove = FirebaseDatabase.getInstance().getReference(secret_field + "/Notifications/" + my_nic);
                                 ValueEventListener remove_Notif_listener = new ValueEventListener() {
@@ -363,6 +341,11 @@ public class MessageListeningService extends Service {
                                             .setLabel("Your answer...")
                                             .build();
 
+                                    PackageManager pm  = context.getPackageManager();
+                                    ComponentName componentName = new ComponentName(context, DirectReplyReciever.class);
+                                    pm.setComponentEnabledSetting(componentName,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                                            PackageManager.DONT_KILL_APP);
+
                                     Intent replyIntent = new Intent(context, DirectReplyReciever.class);
 
                                     Log.wtf("->get_key", get_key);
@@ -396,8 +379,8 @@ public class MessageListeningService extends Service {
                                             "Ответить",
                                             replyPendingIntent).addRemoteInput(remoteInput).build();
                                     NotificationCompat.MessagingStyle messagingStyle =
-                                            new NotificationCompat.MessagingStyle("Me");
-                                    messagingStyle.setConversationTitle("Group Chat");
+                                            new NotificationCompat.MessagingStyle("Я");
+                                    messagingStyle.setConversationTitle("Новые сообщения");
 
                                     chatMessage = new MessagesForService(get_message, get_user_name);
                                     NotificationCompat.MessagingStyle.Message notificationMessage =

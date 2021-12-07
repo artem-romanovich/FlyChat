@@ -46,7 +46,6 @@
                         android:fontFamily="@font/montserrat_bold" />
 
                     <Button
-                        android:onClick="allusers"
                         android:id="@+id/top_delete"
                         style="@style/Widget.AppCompat.Button.Borderless.Colored"
                         android:layout_width="wrap_content"

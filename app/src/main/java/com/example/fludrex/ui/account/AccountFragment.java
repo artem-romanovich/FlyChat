@@ -13,24 +13,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-
+import com.example.fludrex.BuildConfig;
 import com.example.fludrex.R;
 import com.example.fludrex.RegistrationActivity;
-import com.google.android.gms.common.util.IOUtils;
 import com.google.firebase.auth.FirebaseAuth;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.nio.file.StandardCopyOption;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -51,7 +46,7 @@ public class AccountFragment extends Fragment {
 
     LinearLayout linlay_gratitude, linlay_info, linlay_start, linlay_share_app, linlink;
     TextView see_email, see_name, text_info, text_gratitude, txt_info_me, see_nic;
-    Button link, sign_in_no_account, button_info, gratitude_button, btn_return1, btn_return2;
+    Button lgoto, link, sign_in_no_account, button_info, gratitude_button, btn_return1, btn_return2;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_account, container, false);
@@ -60,6 +55,7 @@ public class AccountFragment extends Fragment {
         see_email = root.findViewById(R.id.see_email);
         see_name = root.findViewById(R.id.see_name);
         link = root.findViewById(R.id.link);
+        lgoto = root.findViewById(R.id.lgoto);
         see_nic = root.findViewById(R.id.see_nic);
         sign_in_no_account = root.findViewById(R.id.sign_in_no_account);
         linlay_gratitude = root.findViewById(R.id.linlay_gratitude);
@@ -74,6 +70,7 @@ public class AccountFragment extends Fragment {
         txt_info_me = root.findViewById(R.id.txt_info_me);
         linlay_share_app = root.findViewById(R.id.linlay_share_app);
         linlink = root.findViewById(R.id.linlink);
+        linlink.requestFocus();
 
         gratitude_button.setBackgroundResource(R.drawable.btn_selector);
         button_info.setBackgroundResource(R.drawable.btn_selector);
@@ -283,9 +280,10 @@ public class AccountFragment extends Fragment {
                 //Вывод информации о приложении
                 // *txt_info_me - лишь один из TextView. Остальные прописаны в разметке (нет необходимости
                 //  выделять данные жирным шрифтом). См. "R.layout.fragment_account"
-                String s = "Создатель и единственный владелец проекта: <br><b>Артем Романович</b><br><br>" +
+                String s = "Создатель и владелец проекта: <br><b>Артем Романович</b><br><br>" +
                         "Почта создателя: <br><b>artrom170@gmail.com</b><br><br>" +
-                        "Лицензия: <br><b>Apache License, Version 2.0</b><br><br>"+
+                        "Лицензия: <br><b>Apache License, Version 2.0</b><br><br>" +
+                        "Версия: <br><b>" + BuildConfig.VERSION_NAME + "</b><br><br>" +
                         "Сайт: <br><b>https://artem-romanovich.github.io/flychat_share/</b>";
                 txt_info_me.setText(Html.fromHtml(s));
 
@@ -294,6 +292,18 @@ public class AccountFragment extends Fragment {
                     public void onClick(View v) {
                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://artem-romanovich.github.io/flychat_share/"));
                         startActivity(browserIntent);
+                    }
+                });
+
+                lgoto.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent();
+                        intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+                        intent.putExtra("app_package", requireActivity().getPackageName());
+                        intent.putExtra("app_uid", requireActivity().getApplicationInfo().uid);
+                        intent.putExtra("android.provider.extra.APP_PACKAGE", requireActivity().getPackageName());
+                        startActivity(intent);
                     }
                 });
 

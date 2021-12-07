@@ -5,33 +5,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 import android.widget.VideoView;
-
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.Objects;
-
-import static android.content.ContentValues.TAG;
 
 /*
     Ранее активность представляла собой загрузочный экран с логотипом.
@@ -99,6 +88,8 @@ public class ImageActivity extends AppCompatActivity {
                 linlay_gone.setVisibility(View.GONE);
                 linlay_location.setVisibility(View.VISIBLE);
 
+                AutoStartHelper.getInstance().getAutoStartPermission(ImageActivity.this);
+
                 btn_to_settings.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -108,7 +99,7 @@ public class ImageActivity extends AppCompatActivity {
                             public void run() {
                                 btn_to_settings.setText("Продолжить");
                             }
-                        }, 2000);
+                        }, 5000);
 
                         boolean hasForegroundLocationPermission = ContextCompat.checkSelfPermission(getApplicationContext(),
                                 android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -203,5 +194,64 @@ public class ImageActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+    }
+
+    private void initOPPO() {
+        try {
+
+            Intent i = new Intent(Intent.ACTION_MAIN);
+            i.setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.floatwindow.FloatWindowListActivity"));
+            startActivity(i);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+
+                Intent intent = new Intent("action.coloros.safecenter.FloatWindowListActivity");
+                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.floatwindow.FloatWindowListActivity"));
+                startActivity(intent);
+            } catch (Exception ee) {
+
+                ee.printStackTrace();
+                try{
+
+                    Intent i = new Intent("com.coloros.safecenter");
+                    i.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.sysfloatwindow.FloatWindowListActivity"));
+                    startActivity(i);
+                }catch (Exception e1){
+
+                    e1.printStackTrace();
+                }
+            }
+
+        }
+    }
+    private void initXiaomi() {
+        try {
+
+            Intent i = new Intent(Intent.ACTION_MAIN);
+            i.setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.floatwindow.FloatWindowListActivity"));
+            startActivity(i);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+
+                Intent intent = new Intent("action.coloros.safecenter.FloatWindowListActivity");
+                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.floatwindow.FloatWindowListActivity"));
+                startActivity(intent);
+            } catch (Exception ee) {
+
+                ee.printStackTrace();
+                try{
+
+                    Intent i = new Intent("com.coloros.safecenter");
+                    i.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.sysfloatwindow.FloatWindowListActivity"));
+                    startActivity(i);
+                }catch (Exception e1){
+
+                    e1.printStackTrace();
+                }
+            }
+
+        }
     }
 }

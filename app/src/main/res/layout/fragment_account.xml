@@ -107,13 +107,13 @@
 
                     <LinearLayout
                         android:id="@+id/linlay_share_app"
+                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:clickable="true"
-                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                        android:focusable="true"
                         android:layout_margin="15sp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:orientation="horizontal">
 
                         <ImageButton
@@ -238,11 +238,10 @@
                 <LinearLayout
                     android:id="@+id/linlink"
                     android:layout_width="match_parent"
-                    android:layout_marginBottom="20sp"
-                    android:paddingRight="20sp"
-                    android:paddingLeft="20sp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingLeft="20sp"
+                    android:paddingRight="20sp">
 
                     <!--<TextView
                         android:id="@+id/justanid"
@@ -260,18 +259,37 @@
 
                     <Button
                         android:id="@+id/link"
+                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="перейти на сайт"
-                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                        android:textIsSelectable="true"
-                        android:textColor="@color/C31708E"
                         android:layout_gravity="center"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
                         android:gravity="right"
+                        android:text="перейти на сайт"
+                        android:textColor="@color/C31708E"
+                        android:textIsSelectable="true"
                         android:textSize="20sp"
-                        android:textStyle="bold"/>
+                        android:textStyle="bold" />
 
                 </LinearLayout>
+
+                <Button
+                    android:id="@+id/lgoto"
+                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="15sp"
+                    android:layout_marginBottom="20sp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:gravity="right"
+                    android:text="вкл/выкл FlyChat goto"
+                    android:textColor="@color/C31708E"
+                    android:textIsSelectable="true"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btn_return1"
